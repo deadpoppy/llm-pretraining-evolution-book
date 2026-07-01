@@ -1,0 +1,172 @@
+site_name: 大语言模型预训练技术演进
+site_description: 从 Scaling Law 到数据配方与分布式训练
+site_url: https://deadpoppy.github.io/llm-pretraining-evolution-book/
+repo_url: https://github.com/deadpoppy/llm-pretraining-evolution-book
+repo_name: deadpoppy/llm-pretraining-evolution-book
+
+theme:
+  name: material
+  language: zh
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.select
+    - content.tooltips
+  palette:
+    - scheme: default
+      primary: blue grey
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: 切换到深色模式
+    - scheme: slate
+      primary: blue grey
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: 切换到浅色模式
+  font:
+    text: Noto Sans SC
+    code: Roboto Mono
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search:
+      lang:
+        - zh
+        - en
+  - glightbox:
+      touchNavigation: true
+      loop: false
+      effect: zoom
+      slide_effect: slide
+      width: 100%
+      height: auto
+      zoomable: true
+      draggable: true
+      skip_classes:
+        - skip-lightbox
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - meta
+  - md_in_html
+  - nl2br
+  - sane_lists
+  - smarty
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 4
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.fancylists
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shortener: true
+      repo_url_shorthand: true
+      social_url_shorthand: true
+      provider: github
+      user: deadpoppy
+      repo: llm-pretraining-evolution-book
+  - pymdownx.mark
+  - pymdownx.progressbar
+  - pymdownx.saneheaders
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.blocks.caption
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+extra_css:
+  - stylesheets/book.css
+
+nav:
+  - 首页: index.md
+  - 正文:
+      - 导读: chapters/llm_pretraining_sec00.md
+      - 第1章 预训练的前史: chapters/llm_pretraining_sec01.md
+      - 第2章 Transformer 改变底层结构: chapters/llm_pretraining_sec02.md
+      - 第3章 GPT 路线: chapters/llm_pretraining_sec03.md
+      - 第4章 BERT 路线: chapters/llm_pretraining_sec04.md
+      - 第5章 T5、BART 与统一文本到文本: chapters/llm_pretraining_sec05.md
+      - 第6章 Tokenizer 的核心问题: chapters/llm_pretraining_sec06.md
+      - 第7章 BPE 到 Byte-level Tokenizer: chapters/llm_pretraining_sec07.md
+      - 第8章 Tokenizer 的新问题: chapters/llm_pretraining_sec08.md
+      - 第9章 Scaling Law 的提出: chapters/llm_pretraining_sec09.md
+      - 第10章 GPT-3 与大模型涌现: chapters/llm_pretraining_sec10.md
+      - 第11章 Chinchilla Scaling Law: chapters/llm_pretraining_sec11.md
+      - 第12章 Scaling Law 的新阶段: chapters/llm_pretraining_sec12.md
+      - 第13章 预训练数据的基本构成: chapters/llm_pretraining_sec13.md
+      - 第14章 大规模语料堆叠阶段: chapters/llm_pretraining_sec14.md
+      - 第15章 数据配比成为核心技术: chapters/llm_pretraining_sec15.md
+      - 第16章 数据配比的新趋势: chapters/llm_pretraining_sec16.md
+      - 第17章 分布式训练的基本矛盾: chapters/llm_pretraining_sec17.md
+      - 第18章 并行训练的三大路线: chapters/llm_pretraining_sec18.md
+      - 第19章 3D 并行与千卡训练: chapters/llm_pretraining_sec19.md
+      - 第20章 长上下文与高效 Attention: chapters/llm_pretraining_sec20.md
+      - 第21章 新一代训练系统趋势: chapters/llm_pretraining_sec21.md
+      - 第22章 MoE 稀疏激活模型: chapters/llm_pretraining_sec22.md
+      - 第23章 Multi-token Prediction: chapters/llm_pretraining_sec23.md
+      - 第24章 长上下文预训练: chapters/llm_pretraining_sec24.md
+      - 第25章 多模态预训练的并入: chapters/llm_pretraining_sec25.md
+      - 第26章 Llama 3 训练配方: chapters/llm_pretraining_sec26.md
+      - 第27章 DeepSeek-V3 代表案例: chapters/llm_pretraining_sec27.md
+      - 第28章 Qwen3 与多语言开源模型: chapters/llm_pretraining_sec28.md
+      - 第29章 推理模型的反向影响: chapters/llm_pretraining_sec29.md
+      - 第30章 2026 之后的关键问题: chapters/llm_pretraining_sec30.md
+      - 结语: chapters/llm_pretraining_sec31.md
+  - 附录:
+      - 完整书稿: full-book.md
+      - 章节大纲: outline.md
+      - 写作计划: plan.md
+  - 研究材料:
+      - Wide 01: research/llm_pretraining_wide01.md
+      - Wide 02: research/llm_pretraining_wide02.md
+      - Wide 03: research/llm_pretraining_wide03.md
+      - Wide 04: research/llm_pretraining_wide04.md
+      - Wide 05: research/llm_pretraining_wide05.md
+      - Wide 06: research/llm_pretraining_wide06.md
+      - Wide 07: research/llm_pretraining_wide07.md
+      - Wide 08: research/llm_pretraining_wide08.md

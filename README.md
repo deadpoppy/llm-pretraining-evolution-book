@@ -13,9 +13,10 @@
 
 ## 阅读入口
 
+- 在线书站：[https://deadpoppy.github.io/llm-pretraining-evolution-book/](https://deadpoppy.github.io/llm-pretraining-evolution-book/)
 - 完整书稿：[book/大语言模型预训练技术演进.md](book/大语言模型预训练技术演进.md)
-- 章节大纲：[book/outline.md](book/outline.md)
 - 分章稿件：[book/chapters/](book/chapters/)
+- 站点源码：[docs/](docs/)
 - 插图资源：[book/assets/](book/assets/)
 - 深度研究材料：[book/research/](book/research/)
 - Word 版本：[book/docx/](book/docx/)
@@ -39,7 +40,9 @@
 ```text
 .
 ├── README.md
-├── index.md
+├── mkdocs.yml
+├── requirements.txt
+├── .github/workflows/pages.yml
 ├── book/
 │   ├── 大语言模型预训练技术演进.md
 │   ├── outline.md
@@ -48,9 +51,23 @@
 │   ├── chapters/
 │   ├── docx/
 │   └── research/
-└── _config.yml
+└── docs/
+    ├── index.md
+    ├── full-book.md
+    ├── assets/
+    ├── chapters/
+    ├── research/
+    ├── javascripts/
+    └── stylesheets/
 ```
 
 ## 说明
 
-仓库保留了完整合并稿、逐章 Markdown、插图、研究材料和 Word 文档，方便在线阅读、二次编辑和版本管理。
+仓库保留了完整合并稿、逐章 Markdown、插图、研究材料和 Word 文档，方便在线阅读、二次编辑和版本管理。网站使用 MkDocs Material 构建，已开启章节导航、全文搜索、代码高亮、表格、脚注、Mermaid 图和 MathJax 公式渲染。
+
+## 本地预览
+
+```bash
+pip install -r requirements.txt
+mkdocs serve
+```
