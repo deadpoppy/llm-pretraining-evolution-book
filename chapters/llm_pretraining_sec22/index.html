@@ -1,0 +1,1932 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="从 Scaling Law 到数据配方与分布式训练">
+      
+      
+      
+        <link rel="canonical" href="https://deadpoppy.github.io/llm-pretraining-evolution-book/chapters/llm_pretraining_sec22/">
+      
+      
+        <link rel="prev" href="../llm_pretraining_sec21/">
+      
+      
+        <link rel="next" href="../llm_pretraining_sec23/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.50">
+    
+    
+      
+        <title>第22章 MoE 稀疏激活模型 - 大语言模型预训练技术演进</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.a40c8224.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+SC:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Noto Sans SC";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/book.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+   <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
+    html.glightbox-open { overflow: initial; height: 100%; }
+    .gslide-title { margin-top: 0px; user-select: text; }
+    .gslide-desc { color: #666; user-select: text; }
+    .gslide-image img { background: white; }
+    .gscrollbar-fixer { padding-right: 15px; }
+    .gdesc-inner { font-size: 0.75rem; }
+    body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
+    body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
+    body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}</style> <script src="../../assets/javascripts/glightbox.min.js"></script></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#第22章-moe从稠密模型到稀疏激活模型" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="大语言模型预训练技术演进" class="md-header__button md-logo" aria-label="大语言模型预训练技术演进" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            大语言模型预训练技术演进
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              第22章 MoE 稀疏激活模型
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="teal"  aria-label="切换到深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="teal"  aria-label="切换到浅色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/deadpoppy/llm-pretraining-evolution-book" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    deadpoppy/llm-pretraining-evolution-book
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../llm_pretraining_sec00/" class="md-tabs__link">
+          
+  
+    
+  
+  正文
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../full-book/" class="md-tabs__link">
+          
+  
+    
+  
+  附录
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../research/llm_pretraining_wide01/" class="md-tabs__link">
+          
+  
+    
+  
+  研究材料
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="大语言模型预训练技术演进" class="md-nav__button md-logo" aria-label="大语言模型预训练技术演进" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    大语言模型预训练技术演进
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/deadpoppy/llm-pretraining-evolution-book" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    deadpoppy/llm-pretraining-evolution-book
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    首页
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    正文
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            正文
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec00/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    导读
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec01/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第1章 预训练的前史
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec02/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第2章 Transformer 改变底层结构
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec03/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第3章 GPT 路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec04/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第4章 BERT 路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec05/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第5章 T5、BART 与统一文本到文本
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec06/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第6章 Tokenizer 的核心问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec07/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第7章 BPE 到 Byte-level Tokenizer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec08/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第8章 Tokenizer 的新问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec09/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第9章 Scaling Law 的提出
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec10/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第10章 GPT-3 与大模型涌现
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec11/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第11章 Chinchilla Scaling Law
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec12/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第12章 Scaling Law 的新阶段
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec13/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第13章 预训练数据的基本构成
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec14/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第14章 大规模语料堆叠阶段
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec15/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第15章 数据配比成为核心技术
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec16/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第16章 数据配比的新趋势
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec17/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第17章 分布式训练的基本矛盾
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec18/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第18章 并行训练的三大路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec19/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第19章 3D 并行与千卡训练
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec20/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第20章 长上下文与高效 Attention
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec21/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第21章 新一代训练系统趋势
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    第22章 MoE 稀疏激活模型
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    第22章 MoE 稀疏激活模型
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#221-为什么稠密模型越来越贵" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.1 为什么稠密模型越来越贵
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#222-moe-的核心思想更多参数不等于更多计算" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.2 MoE 的核心思想：更多参数，不等于更多计算
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#223-switch-transformergshard-到现代-moe" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.3 Switch Transformer、GShard 到现代 MoE
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#224-路由负载均衡与训练稳定性" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.4 路由、负载均衡与训练稳定性
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#225-deepseek-系列带来的-moe-工程化启发" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.5 DeepSeek 系列带来的 MoE 工程化启发
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec23/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第23章 Multi-token Prediction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec24/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第24章 长上下文预训练
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec25/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第25章 多模态预训练的并入
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec26/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第26章 Llama 3 训练配方
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec27/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第27章 DeepSeek-V3 代表案例
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec28/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第28章 Qwen3 与多语言开源模型
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec29/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第29章 推理模型的反向影响
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec30/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第30章 2026 之后的关键问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec31/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    结语
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    附录
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            附录
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../full-book/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    完整书稿
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../outline/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    章节大纲
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plan/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    写作计划
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    研究材料
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            研究材料
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide01/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 01
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide02/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 02
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide03/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 03
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide04/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 04
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide05/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 05
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide06/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 06
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide07/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 07
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide08/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 08
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#221-为什么稠密模型越来越贵" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.1 为什么稠密模型越来越贵
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#222-moe-的核心思想更多参数不等于更多计算" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.2 MoE 的核心思想：更多参数，不等于更多计算
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#223-switch-transformergshard-到现代-moe" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.3 Switch Transformer、GShard 到现代 MoE
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#224-路由负载均衡与训练稳定性" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.4 路由、负载均衡与训练稳定性
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#225-deepseek-系列带来的-moe-工程化启发" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.5 DeepSeek 系列带来的 MoE 工程化启发
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="第22章-moe从稠密模型到稀疏激活模型">第22章 MoE：从稠密模型到稀疏激活模型<a class="headerlink" href="#第22章-moe从稠密模型到稀疏激活模型" title="Permanent link">&para;</a></h1>
+<p>2017年Transformer问世后，大模型规模的扩张几乎遵循一条单一的轨迹：更大的参数量、更长的训练时间、更多的GPU。这条路径在GPT-3（175B参数）和GPT-4（估计约1.8T参数）时代达到成本拐点——稠密模型（Dense Model，即每个输入激活全部参数的模型）的推理成本与参数数量严格线性挂钩，每次前向传播都要遍历整个参数矩阵 [<sup>261</sup>]。Mixture-of-Experts（MoE，混合专家模型）通过条件计算（Conditional Computation）打破了这一定律：模型可以拥有万亿级总参数，但每个token只激活其中一小部分。这一解耦为大规模模型的经济可行性打开了新窗口。</p>
+<h2 id="221-为什么稠密模型越来越贵">22.1 为什么稠密模型越来越贵<a class="headerlink" href="#221-为什么稠密模型越来越贵" title="Permanent link">&para;</a></h2>
+<p>稠密模型的成本困境体现在两个层面。</p>
+<p><strong>训练成本</strong>方面，GPT-3（175B参数）的训练消耗约3.64×10²³ FLOPs，需要数千张V100运行数周 [<sup>261</sup>]。GPT-4级别的模型参数量可能达到1.8万亿，训练成本攀升至数千万美元级别。每次参数翻倍，训练和推理成本都同步翻倍。Scaling Law告诉我们模型能力随参数增加而提升，但没有给出降低成本的方案 [<sup>261</sup>]。</p>
+<p><strong>推理成本</strong>才是真正的痛点。训练是一次性支出，推理是持续性消耗。稠密模型的推理FLOPs ≈ 2 × 参数数 × 生成token数。一个1.8T参数的稠密模型，每生成一个token需要约3.6T次浮点运算。以GPT-4在2023年3月的API定价为例，输入token $30/百万、输出token <span class="arithmatex">\(60/百万 [^477^]。到2024年5月GPT-4o将价格降至\)</span>5/$15每百万token，但同等能力级别的稠密模型仍然需要庞大的计算资源支撑 [<sup>477</sup>]。推理成本的线性增长还带来部署层面的限制：大模型难以在边缘设备或消费级GPU上运行，因为显存需求与参数量成正比。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">模型（估计规模）</th>
+<th style="text-align: center;">参数量</th>
+<th style="text-align: center;">推理FLOPs/token</th>
+<th style="text-align: center;">API定价（输入/百万token）</th>
+<th style="text-align: center;">年度推理成本估算（10亿token/月）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">GPT-3 级别</td>
+<td style="text-align: center;">175B</td>
+<td style="text-align: center;">350B</td>
+<td style="text-align: center;">~$10 / $30</td>
+<td style="text-align: center;">~$480万</td>
+</tr>
+<tr>
+<td style="text-align: center;">GPT-4 级别（稠密估计）</td>
+<td style="text-align: center;">~1.8T</td>
+<td style="text-align: center;">3.6T</td>
+<td style="text-align: center;">$30 / $60（首发）</td>
+<td style="text-align: center;">~$1.08亿</td>
+</tr>
+<tr>
+<td style="text-align: center;">GPT-4o（优化后稠密）</td>
+<td style="text-align: center;">~推测200B级稠密</td>
+<td style="text-align: center;">~400B</td>
+<td style="text-align: center;">$5 / $15</td>
+<td style="text-align: center;">~$2400万</td>
+</tr>
+</tbody>
+</table>
+<p>上表中的成本估算揭示了核心矛盾：如果模型能力需要1.8T参数来支撑，稠密架构的推理成本将难以被任何商业化场景承受。GPT-4o通过模型优化和系统压缩将成本降低约83%，但本质上仍受限于&rdquo;参数=计算&rdquo;的线性关系 [<sup>477</sup>]。Scaling Law揭示了增大参数量的收益，但没有提供突破成本墙的工程手段。MoE架构的提出正是为了解耦总参数量与单次推理计算量这两个变量，让模型在保持大容量知识库的同时，将每次推理的计算量控制在可接受范围内。</p>
+<h2 id="222-moe-的核心思想更多参数不等于更多计算">22.2 MoE 的核心思想：更多参数，不等于更多计算<a class="headerlink" href="#222-moe-的核心思想更多参数不等于更多计算" title="Permanent link">&para;</a></h2>
+<p>MoE（Mixture-of-Experts）并非新概念。Jacobs等人于1991年首次提出用多个&rdquo;专家&rdquo;网络分别处理不同类型的输入 [<sup>259</sup>]。但其在大语言模型中的规模化应用，直到2017年Shazeer等人提出稀疏门控MoE层（Sparsely-Gated MoE Layer）才真正开始 [<sup>257</sup>]。</p>
+<p><strong>条件计算</strong>是MoE的第一性原理。传统稠密模型对每个输入都执行相同的计算图。MoE则引入一个门控网络（Gating Network，也称Router），为每个输入token动态选择一小部分&rdquo;专家&rdquo;子网络进行处理 [<sup>257</sup>]。绝大多数参数在单次前向传播中不被访问。</p>
+<p>MoE层在Transformer中的典型实现方式是：用MoE层替换标准Transformer块中的前馈网络（FFN）层。标准Transformer块的FFN由两个线性层夹一个激活函数组成，参数量占整个模型的约三分之二。MoE层则将这个单一FFN替换为N个并行的FFN&rdquo;专家&rdquo;和一个路由门控。注意力层保持不变，每个token的query/key/value计算仍然涉及全部参数。</p>
+<p><strong>Top-K路由</strong>是MoE的关键机制。路由门控计算每个token与各专家的亲和度分数，选择分数最高的K个专家处理该token。K值通常取1或2：K=1时计算量最小，K=2时模型质量更优。GShard（2020）采用Top-2路由，Switch Transformer（2022）将其简化为Top-1，Mixtral 8x7B（2024）回归Top-2 [<sup>348</sup>]。路由门控本身是一个可学习的小型线性层，输入为token的隐藏状态，输出为N个专家的选择分数。门控参数量远小于专家总参数量，因此路由决策的计算开销可以忽略不计。</p>
+<p>专家容量约束是工程实现的必要设计。每个GPU上的专家能处理的token数量有限，GShard引入容量因子（Capacity Factor）控制这一上限：<code>expert_capacity = (num_tokens / num_experts) × capacity_factor</code> [<sup>380</sup>]。容量因子大于1时为专家预留缓冲空间，小于1时强制压缩负载。超出容量的token被丢弃，依赖残差连接恢复信息。这一机制在提升训练效率的同时，也成为训练稳定性的一个隐患来源——丢弃token意味着信息损失，尤其在负载严重不均衡时更为突出。</p>
+<p>MoE架构的工程核心可以用一个公式概括：总参数量 = N（每层专家数）× 专家大小 × 层数；激活参数量 = K（激活专家数）× 专家大小 × 层数。当N远大于K时，模型在不增加单次推理计算的前提下大幅扩展知识容量。这一公式的实践意义是巨大的：一个总参数量为1T、激活参数为10B的MoE模型，其推理计算量仅与一个10B参数的稠密模型相当，但知识容量和表示能力接近1T参数的水平。</p>
+<h2 id="223-switch-transformergshard-到现代-moe">22.3 Switch Transformer、GShard 到现代 MoE<a class="headerlink" href="#223-switch-transformergshard-到现代-moe" title="Permanent link">&para;</a></h2>
+<p>MoE从论文概念到工程可训练的架构，经历了三个关键里程碑。</p>
+<p><strong>GShard（Lepikhin et al., 2020）</strong>是首个将MoE扩展到Transformer并工程化实现的系统。GShard用MoE层替换T5模型的FFN层，训练了从125亿到6000亿参数的系列模型 [<sup>261</sup>]。其核心设计包括Top-2路由策略（每个token由两个专家处理）和专家并行（Expert Parallelism，EP）——将不同专家分布在不同GPU上 [<sup>351</sup>]。GShard还引入了辅助负载均衡损失（Auxiliary Load Balancing Loss），通过额外的损失项惩罚专家间的负载不均衡 [<sup>259</sup>]。</p>
+<p><strong>Switch Transformer（Fedus et al., 2022）</strong>将MoE推向万亿参数规模。其核心创新是将路由策略简化为Top-1——每个token只路由到一个专家 [<sup>258</sup>]。这一简化大幅降低了跨GPU通信开销和计算复杂度。Switch Transformer成功训练了1.6万亿参数的模型，证明了MoE架构的极强可扩展性 [<sup>261</sup>]。但Top-1路由的信息损失也更为明显，单个专家的&rdquo;错误分配&rdquo;无法被其他专家补偿。</p>
+<p><strong>ST-MoE（Zoph et al., 2022）</strong>在稳定性层面做出了关键贡献。ST-MoE引入了Router z-loss，通过惩罚路由logits的幅度防止路由概率过度尖锐化，显著改善了训练稳定性 [<sup>339</sup>]。ST-MoE还系统分析了Encoder-Decoder架构下MoE的表现差异，发现Encoder比Decoder更适合MoE化——Encoder的自注意力允许所有位置并行处理，而Decoder的因果注意力限制了专家并行的效率。</p>
+<p><strong>Mixtral 8x7B（Jiang et al., 2024）</strong>是MoE走向开源社区的转折点。它采用32层Transformer，每层8个专家，每个token激活2个专家，总参数47B，激活参数仅13B [<sup>348</sup>]。Mixtral的性能匹配甚至超过LLaMA 2 70B，但推理成本显著更低。Mixtral的设计哲学与Google系MoE截然不同：不追求每层数千个微型专家，而是使用少量大型专家（每个专家接近7B规模FFN），通过质量-效率平衡赢得实用主义者的认可 [<sup>349</sup>]。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">模型</th>
+<th style="text-align: center;">年份</th>
+<th style="text-align: center;">路由策略</th>
+<th style="text-align: center;">每层专家数</th>
+<th style="text-align: center;">总参数</th>
+<th style="text-align: center;">激活参数</th>
+<th style="text-align: left;">核心贡献</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">GShard</td>
+<td style="text-align: center;">2020</td>
+<td style="text-align: center;">Top-2</td>
+<td style="text-align: center;">2048</td>
+<td style="text-align: center;">600B</td>
+<td style="text-align: center;">~1.5B</td>
+<td style="text-align: left;">首个大规模Transformer MoE，专家并行 [<sup>261</sup>]</td>
+</tr>
+<tr>
+<td style="text-align: center;">Switch Transformer</td>
+<td style="text-align: center;">2022</td>
+<td style="text-align: center;">Top-1</td>
+<td style="text-align: center;">2048</td>
+<td style="text-align: center;">1.6T</td>
+<td style="text-align: center;">~1B</td>
+<td style="text-align: left;">极简路由，万亿参数可扩展性 [<sup>258</sup>]</td>
+</tr>
+<tr>
+<td style="text-align: center;">ST-MoE</td>
+<td style="text-align: center;">2022</td>
+<td style="text-align: center;">Top-2</td>
+<td style="text-align: center;">128-512</td>
+<td style="text-align: center;">269B</td>
+<td style="text-align: center;">~2B</td>
+<td style="text-align: left;">Router z-loss稳定训练 [<sup>339</sup>]</td>
+</tr>
+<tr>
+<td style="text-align: center;">Mixtral 8x7B</td>
+<td style="text-align: center;">2024</td>
+<td style="text-align: center;">Top-2</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">47B</td>
+<td style="text-align: center;">13B</td>
+<td style="text-align: left;">首个主流开源MoE，质量-效率平衡 [<sup>348</sup>]</td>
+</tr>
+<tr>
+<td style="text-align: center;">DeepSeekMoE</td>
+<td style="text-align: center;">2024</td>
+<td style="text-align: center;">Top-K细粒度</td>
+<td style="text-align: center;">64+共享</td>
+<td style="text-align: center;">145B</td>
+<td style="text-align: center;">~12B</td>
+<td style="text-align: left;">细粒度专家+共享专家隔离 [<sup>293</sup>]</td>
+</tr>
+<tr>
+<td style="text-align: center;">DeepSeek-V3</td>
+<td style="text-align: center;">2024</td>
+<td style="text-align: center;">无辅助损失</td>
+<td style="text-align: center;">256+共享</td>
+<td style="text-align: center;">671B</td>
+<td style="text-align: center;">37B</td>
+<td style="text-align: left;">无辅助损失负载均衡，FP8训练 [<sup>267</sup>]</td>
+</tr>
+</tbody>
+</table>
+<p>上表展示了MoE架构六年间的演进主线：路由策略从Top-2到Top-1再回归Top-2，反映了工程效率与模型质量的持续权衡。Switch Transformer的极简主义证明了MoE的可扩展性上限，Mixtral 8x7B的务实设计（仅8个专家、Top-2路由）证明了MoE在开源社区的可行性 [<sup>348</sup>]。每层专家数从2048到8的大幅缩减，标志着设计理念从&rdquo;最大化稀疏度&rdquo;转向&rdquo;质量-效率平衡&rdquo;。DeepSeek-V3在此基础上引入细粒度专家和无辅助损失负载均衡，将MoE推向工程化成熟的新阶段 [<sup>267</sup>]。</p>
+<h2 id="224-路由负载均衡与训练稳定性">22.4 路由、负载均衡与训练稳定性<a class="headerlink" href="#224-路由负载均衡与训练稳定性" title="Permanent link">&para;</a></h2>
+<p>MoE训练面临的核心挑战是<strong>专家崩溃（Expert Collapse）</strong>：部分专家被过度使用，另一些专家几乎不被激活，导致参数浪费和模型退化 [<sup>257</sup>]。解决这一问题的方法经历了四代演进。</p>
+<p><strong>第一代：辅助损失法（GShard / Switch Transformer）。</strong>在训练目标中添加负载均衡损失项 <code>L_balance = α × Σ(f_i × P_i)</code>，其中f_i是分配给专家i的token比例，P_i是路由到专家i的概率比例 [<sup>354</sup>]。该方法简单有效，但辅助损失的梯度可能干扰主任务损失，α系数的大小成为难以调节的超参数——太小则负载不均衡，太大则损害模型性能。</p>
+<p><strong>第二代：专家选择路由（Expert Choice Routing, Zhou et al., 2022）。</strong>不再由token选择专家，而是让每个专家选择top-k个token [<sup>262</sup>]。这一逆向设计天然保证负载绝对均匀，训练收敛速度提升超过2倍 [<sup>262</sup>]。局限在于需要对输入token进行重排序，增加了工程复杂度。</p>
+<p><strong>第三代：无辅助损失法（DeepSeek-V3）。</strong>DeepSeek-V3开创了通过偏置更新实现负载均衡的策略 [<sup>267</sup>]。系统基于观测到的专家负载动态调整路由偏置项：负载过高的专家其偏置降低，负载过低的专家其偏置升高。这种方法完全消除了辅助损失对主任务梯度的干扰。偏置更新在训练步骤间以固定频率执行，系统观测过去一段时间内的专家负载统计，根据偏差程度调整各专家的路由偏置值。负载偏高的专家其偏置被降低，负载偏低的专家其偏置被升高，形成负反馈调节。DeepSeek-V3的671B参数模型全程稳定训练，未出现loss spike或重启，验证了这一策略在大规模训练中的有效性 [<sup>403</sup>]。</p>
+<p><strong>Router z-loss（ST-MoE提出）</strong>是训练稳定性的另一关键组件。路由门控使用softmax计算专家选择概率时，logits的幅度容易在训练过程中不断增大，导致路由分布过度尖锐（某个专家的softmax概率接近1，其他接近0）。Router z-loss通过对logits的平方和施加惩罚，控制路由分布的熵，防止路由 collapse [<sup>339</sup>]。</p>
+<p><strong>训练-推理不一致</strong>是MoE特有的部署挑战。训练阶段的路由分布受负载均衡损失影响，推理阶段则不受此约束，两者的分布差异可能导致性能下降。Rollout Routing Replay（R3）方法通过记录推理阶段的路由分布并在训练中回放，显著降低训练与推理之间的KL散度 [<sup>357</sup>]。这一发现对MoE模型的强化学习训练尤为重要——MoE模型在RL训练中更容易出现灾难性崩溃 [<sup>357</sup>]。</p>
+<p>MegaBlocks框架从另一个角度解决了稳定性问题：通过块稀疏操作实现&rdquo;无丢弃MoE&rdquo;（dropless MoE），避免了GShard中token丢弃对模型质量的负面影响，在MoE训练上实现了高达40%的端到端加速 [<sup>380</sup>]。</p>
+<p><strong>专家并行（Expert Parallelism）的通信开销</strong>是MoE训练的另一工程瓶颈。MoE层需要在GPU间进行all-to-all通信传输token——每个GPU上的token需要被发送到托管目标专家的远程GPU [<sup>343</sup>]。当专家数量大、token序列长时，all-to-all通信成为训练速度的主要瓶颈。负载不均衡还会加剧这一问题：如果部分GPU处理的专家接收token过多而其他GPU空闲，快的GPU必须等待慢的GPU完成计算，造成流水线气泡。因此，负载均衡不仅关乎模型质量，也直接影响训练吞吐量。</p>
+<h2 id="225-deepseek-系列带来的-moe-工程化启发">22.5 DeepSeek 系列带来的 MoE 工程化启发<a class="headerlink" href="#225-deepseek-系列带来的-moe-工程化启发" title="Permanent link">&para;</a></h2>
+<p>DeepSeekMoE是2024年最具标志性的MoE架构创新，其核心设计目标是实现极致的专家专业化 [<sup>293</sup>]。</p>
+<p><strong>细粒度专家分割（Fine-Grained Expert Segmentation）</strong>是第一大创新。传统MoE中每个专家是一个完整的FFN层。DeepSeekMoE将专家的FFN中间隐藏维度分割为更小的粒度，在保持总参数不变的情况下增加专家数量，每次激活更多但更小的专家。这允许路由系统为每个token组合出更灵活、更精确的专家组合 [<sup>282</sup>]。</p>
+<p><strong>共享专家隔离（Shared Expert Isolation）</strong>是第二大创新。DeepSeekMoE将一部分专家隔离为&rdquo;共享专家&rdquo;——这些专家对所有token始终激活，负责捕获跨上下文的通用知识。其余&rdquo;路由专家&rdquo;则专注处理特定类型的输入。这种分工减少了路由专家间的知识冗余，迫使每个路由专家真正专精于特定领域或模式 [<sup>282</sup>]。</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>输入Token
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    │
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    ▼
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>┌─────────────────────────────────────┐
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│         共享专家（始终激活）           │
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│  ┌─────────┐  ┌─────────┐           │
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│  │ 共享专家1 │  │ 共享专家2 │  ...    │
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│  └────┬────┘  └────┬────┘           │
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>└───────┼────────────┼────────────────┘
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        │            │
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        ▼            ▼
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    共享输出      路由门控(Router)
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>                    │
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>                    ▼
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>        ┌───────────────────────┐
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>        │   Top-K路由选择        │
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>        │  从N个细粒度专家中选K个  │
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>        └───────────────────────┘
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>                    │
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>        ┌───────────┼───────────┐
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>        ▼           ▼           ▼
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    ┌───────┐  ┌───────┐   ┌───────┐
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    │路由专家1│  │路由专家2│   │路由专家K│
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    └───┬───┘  └───┬───┘   └───┬───┘
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>        └───────────┼───────────┘
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>                    ▼
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>              加权聚合输出
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>                    │
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>                    ▼
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>              残差连接 → 输出
+</span></code></pre></div>
+<p>上图展示了DeepSeekMoE的路由架构：输入token首先经过共享专家处理，同时路由门控从大量细粒度路由专家中选出K个，最终输出为共享专家输出与选定路由专家输出的加权和，再经残差连接传递。这种架构可以用公式表达：<code>h'_t = u_t + Σ FFN_i^(s)(u_t) + Σ(g_{i,t} × FFN_i^(r)(u_t))</code>，其中u_t是第t个token的输入隐藏状态，上标(s)表示共享专家，上标&reg;表示路由专家，g_{i,t}是路由门控值 [<sup>284</sup>]。</p>
+<p><strong>量化效率收益。</strong>DeepSeekMoE的实验数据构成了MoE效率优势最有力的证据。DeepSeekMoE 2B的性能接近2.9B参数的GShard变体，但专家参数和计算量仅为后者的1.5倍 [<sup>293</sup>]。DeepSeekMoE 16B仅用约40%的计算量达到与LLaMA2 7B相当的性能 [<sup>293</sup>]。DeepSeekMoE 145B仅用28.5%（部分指标低至18.2%）的计算量达到与DeepSeek 67B相当的性能 [<sup>282</sup>]。这些数字表明，MoE架构的效率优势随着模型规模扩大而愈发显著。</p>
+<p><strong>DeepSeek-V3的产业化实践</strong>将MoE工程化推向新高度。DeepSeek-V3拥有671B总参数和37B激活参数，在2048张H800 GPU上完成预训练，MFU（Model FLOPs Utilization）达到34.7%，训练全程无loss spike或重启 [<sup>403</sup>]。这一成就依赖于多项工程创新：Multi-Head Latent Attention（MLA）减少KV Cache内存占用；无辅助损失负载均衡消除梯度干扰；FP8低精度训练降低显存和通信成本。DeepSeek-V3的训练总消耗约278.8万GPU小时，按H800租赁价格折算，训练总成本约557万美元——远低于同等能力稠密模型的数千万美元级别 [<sup>403</sup>]。</p>
+<p><strong>MoE成为2024年后大模型的默认架构选择。</strong>2024年前5个月发布的超100B参数MoE模型数量超过此前三年总和 [<sup>261</sup>]。Gemini 1.5 Pro基于MoE架构处理长达千万token的上下文，在多模态理解任务上取得突破 [<sup>289</sup>]。Qwen-MoE、Kimi-VL、TeleChat3-MoE、OLMoE等系列模型均采用了MoE。Qwen-3-30B-A3B仅激活3B参数即超越同等规模的稠密模型，TeleChat3-MoE系列将MoE扩展到万亿参数级别 [<sup>474</sup>]。MoE架构已完成从学术研究到产业化标配的跨越。</p>
+<p>DeepSeek-V3的实践还揭示了一条MoE产业化路径：训练一个高质量稠密基础模型作为起点，然后通过细粒度专家分割和持续预训练将其MoE化。这种方法避免了从零训练MoE的稳定性风险，同时复用了稠密模型的已有能力。类似思路也出现在CMoE（Carved MoE）等后训练转换方法中——从稠密模型中识别出稀疏激活的神经元组，将其分配为不同专家，仅需少量微调即可恢复性能 [<sup>403</sup>]。</p>
+<p>回顾MoE从1991年概念提出到2024年成为标配的三十余年，真正的突破不在于思想本身，而在于工程化的成熟：分布式训练系统解决了专家并行的通信瓶颈，无辅助损失负载均衡消除了训练稳定性的最后一道障碍，FP8低精度训练进一步压缩了成本空间。当这些工程组件组合在一起时，MoE的核心命题——&ldquo;更多参数，不等于更多计算&rdquo;——才真正从理论可能变为产业现实。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.select", "content.tooltips"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.60a45f97.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  <script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(() => { lightbox.reload() });
+</script></body>
+</html>

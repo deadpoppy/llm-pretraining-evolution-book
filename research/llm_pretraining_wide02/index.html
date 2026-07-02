@@ -1,0 +1,3465 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="从 Scaling Law 到数据配方与分布式训练">
+      
+      
+      
+        <link rel="canonical" href="https://deadpoppy.github.io/llm-pretraining-evolution-book/research/llm_pretraining_wide02/">
+      
+      
+        <link rel="prev" href="../llm_pretraining_wide01/">
+      
+      
+        <link rel="next" href="../llm_pretraining_wide03/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.50">
+    
+    
+      
+        <title>Wide 02 - 大语言模型预训练技术演进</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.a40c8224.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+SC:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Noto Sans SC";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/book.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+   <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
+    html.glightbox-open { overflow: initial; height: 100%; }
+    .gslide-title { margin-top: 0px; user-select: text; }
+    .gslide-desc { color: #666; user-select: text; }
+    .gslide-image img { background: white; }
+    .gscrollbar-fixer { padding-right: 15px; }
+    .gdesc-inner { font-size: 0.75rem; }
+    body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
+    body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
+    body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}</style> <script src="../../assets/javascripts/glightbox.min.js"></script></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#研究bertgptt5预训练路线分化与演进2018-2020" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="大语言模型预训练技术演进" class="md-header__button md-logo" aria-label="大语言模型预训练技术演进" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            大语言模型预训练技术演进
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Wide 02
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="teal"  aria-label="切换到深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="teal"  aria-label="切换到浅色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/deadpoppy/llm-pretraining-evolution-book" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    deadpoppy/llm-pretraining-evolution-book
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../chapters/llm_pretraining_sec00/" class="md-tabs__link">
+          
+  
+    
+  
+  正文
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../full-book/" class="md-tabs__link">
+          
+  
+    
+  
+  附录
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../llm_pretraining_wide01/" class="md-tabs__link">
+          
+  
+    
+  
+  研究材料
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="大语言模型预训练技术演进" class="md-nav__button md-logo" aria-label="大语言模型预训练技术演进" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    大语言模型预训练技术演进
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/deadpoppy/llm-pretraining-evolution-book" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    deadpoppy/llm-pretraining-evolution-book
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    首页
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    正文
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            正文
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec00/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    导读
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec01/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第1章 预训练的前史
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec02/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第2章 Transformer 改变底层结构
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec03/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第3章 GPT 路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec04/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第4章 BERT 路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec05/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第5章 T5、BART 与统一文本到文本
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec06/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第6章 Tokenizer 的核心问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec07/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第7章 BPE 到 Byte-level Tokenizer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec08/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第8章 Tokenizer 的新问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec09/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第9章 Scaling Law 的提出
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec10/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第10章 GPT-3 与大模型涌现
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec11/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第11章 Chinchilla Scaling Law
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec12/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第12章 Scaling Law 的新阶段
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec13/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第13章 预训练数据的基本构成
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec14/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第14章 大规模语料堆叠阶段
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec15/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第15章 数据配比成为核心技术
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec16/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第16章 数据配比的新趋势
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec17/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第17章 分布式训练的基本矛盾
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec18/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第18章 并行训练的三大路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec19/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第19章 3D 并行与千卡训练
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec20/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第20章 长上下文与高效 Attention
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec21/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第21章 新一代训练系统趋势
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec22/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第22章 MoE 稀疏激活模型
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec23/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第23章 Multi-token Prediction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec24/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第24章 长上下文预训练
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec25/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第25章 多模态预训练的并入
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec26/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第26章 Llama 3 训练配方
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec27/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第27章 DeepSeek-V3 代表案例
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec28/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第28章 Qwen3 与多语言开源模型
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec29/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第29章 推理模型的反向影响
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec30/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第30章 2026 之后的关键问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec31/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    结语
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    附录
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            附录
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../full-book/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    完整书稿
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../outline/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    章节大纲
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plan/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    写作计划
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    研究材料
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            研究材料
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide01/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 01
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Wide 02
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Wide 02
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#一关键发现" class="md-nav__link">
+    <span class="md-ellipsis">
+      一、关键发现
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="一、关键发现">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-gpt路线自回归语言模型成为主流第3章素材" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. GPT路线：自回归语言模型成为主流（第3章素材）
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. GPT路线：自回归语言模型成为主流（第3章素材）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-gpt-12018年6月的历史性突破" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.1 GPT-1（2018年6月）的历史性突破
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-为什么next-token-prediction能成为强大的预训练目标" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.2 为什么Next Token Prediction能成为强大的预训练目标
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-decoder-only架构的核心优势" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3 Decoder-only架构的核心优势
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-gpt系列的关键演进节点" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.4 GPT系列的关键演进节点
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-bert路线masked-language-modeling的崛起第4章素材" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. BERT路线：Masked Language Modeling的崛起（第4章素材）
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. BERT路线：Masked Language Modeling的崛起（第4章素材）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-bert2018年10月的双向理解革命" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1 BERT（2018年10月）的双向理解革命
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-mlm的理论价值与局限" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.2 MLM的理论价值与局限
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-nsp任务的争议与后续处理" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.3 NSP任务的争议与后续处理
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-bert路线的变体与演进" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.4 BERT路线的变体与演进
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-t5bart与统一文本到文本思想第5章素材" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. T5、BART与&rdquo;统一文本到文本&rdquo;思想（第5章素材）
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. T5、BART与”统一文本到文本”思想（第5章素材）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-t5text-to-text统一框架" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.1 T5：Text-to-Text统一框架
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-t5的span-corruption预训练目标" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.2 T5的Span Corruption预训练目标
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-bart降噪自编码器" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.3 BART：降噪自编码器
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-bart-vs-t5的核心差异" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.4 BART vs T5的核心差异
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-text-to-text思想的深远影响" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.5 Text-to-Text思想的深远影响
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-三种路线的根本差异与优劣对比" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. 三种路线的根本差异与优劣对比
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. 三种路线的根本差异与优劣对比">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-架构-目标-能力对照表" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.1 架构-目标-能力对照表
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-bert-vs-gpt的技术路线根本差异" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.2 BERT vs GPT的技术路线根本差异
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-三种路线在不同任务上的表现差异" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.3 三种路线在不同任务上的表现差异
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-为什么gpt路线最终成为大模型主流路线" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. 为什么GPT路线最终成为大模型主流路线
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. 为什么GPT路线最终成为大模型主流路线">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-三个决定性因素" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.1 三个决定性因素
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-理论层面的深层原因" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.2 理论层面的深层原因
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-历史路径依赖" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.3 历史路径依赖
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-encoder-only架构的衰落" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.4 Encoder-only架构的衰落
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-xlnet被忽视的中间路线尝试" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. XLNet：被忽视的中间路线尝试
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#二重要论文和来源" class="md-nav__link">
+    <span class="md-ellipsis">
+      二、重要论文和来源
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="二、重要论文和来源">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#核心论文" class="md-nav__link">
+    <span class="md-ellipsis">
+      核心论文
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#重要综述与分析文章" class="md-nav__link">
+    <span class="md-ellipsis">
+      重要综述与分析文章
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#三趋势和信号" class="md-nav__link">
+    <span class="md-ellipsis">
+      三、趋势和信号
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="三、趋势和信号">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-清晰趋势" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.1 清晰趋势
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-早期信号" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.2 早期信号
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#四争议和冲突观点" class="md-nav__link">
+    <span class="md-ellipsis">
+      四、争议和冲突观点
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="四、争议和冲突观点">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#争议一bert-vs-gpt哪种架构更优" class="md-nav__link">
+    <span class="md-ellipsis">
+      争议一：BERT vs GPT哪种架构更优？
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#争议二nsp是否有价值" class="md-nav__link">
+    <span class="md-ellipsis">
+      争议二：NSP是否有价值？
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#争议三encoder-decoder是否还有未来" class="md-nav__link">
+    <span class="md-ellipsis">
+      争议三：Encoder-Decoder是否还有未来？
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#争议四涌现能力是否真实" class="md-nav__link">
+    <span class="md-ellipsis">
+      争议四：涌现能力是否真实？
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#五建议深入研究的领域" class="md-nav__link">
+    <span class="md-ellipsis">
+      五、建议深入研究的领域
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="五、建议深入研究的领域">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-尚未充分探索的方向" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.1 尚未充分探索的方向
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-需要更多数据的方向" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.2 需要更多数据的方向
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#六关键引用索引" class="md-nav__link">
+    <span class="md-ellipsis">
+      六、关键引用索引
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide03/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 03
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide04/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 04
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide05/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 05
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide06/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 06
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide07/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 07
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide08/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 08
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#一关键发现" class="md-nav__link">
+    <span class="md-ellipsis">
+      一、关键发现
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="一、关键发现">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-gpt路线自回归语言模型成为主流第3章素材" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. GPT路线：自回归语言模型成为主流（第3章素材）
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. GPT路线：自回归语言模型成为主流（第3章素材）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-gpt-12018年6月的历史性突破" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.1 GPT-1（2018年6月）的历史性突破
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-为什么next-token-prediction能成为强大的预训练目标" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.2 为什么Next Token Prediction能成为强大的预训练目标
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-decoder-only架构的核心优势" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3 Decoder-only架构的核心优势
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-gpt系列的关键演进节点" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.4 GPT系列的关键演进节点
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-bert路线masked-language-modeling的崛起第4章素材" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. BERT路线：Masked Language Modeling的崛起（第4章素材）
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. BERT路线：Masked Language Modeling的崛起（第4章素材）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-bert2018年10月的双向理解革命" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1 BERT（2018年10月）的双向理解革命
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-mlm的理论价值与局限" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.2 MLM的理论价值与局限
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-nsp任务的争议与后续处理" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.3 NSP任务的争议与后续处理
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-bert路线的变体与演进" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.4 BERT路线的变体与演进
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-t5bart与统一文本到文本思想第5章素材" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. T5、BART与&rdquo;统一文本到文本&rdquo;思想（第5章素材）
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. T5、BART与”统一文本到文本”思想（第5章素材）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-t5text-to-text统一框架" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.1 T5：Text-to-Text统一框架
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-t5的span-corruption预训练目标" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.2 T5的Span Corruption预训练目标
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-bart降噪自编码器" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.3 BART：降噪自编码器
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-bart-vs-t5的核心差异" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.4 BART vs T5的核心差异
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-text-to-text思想的深远影响" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.5 Text-to-Text思想的深远影响
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-三种路线的根本差异与优劣对比" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. 三种路线的根本差异与优劣对比
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. 三种路线的根本差异与优劣对比">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-架构-目标-能力对照表" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.1 架构-目标-能力对照表
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-bert-vs-gpt的技术路线根本差异" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.2 BERT vs GPT的技术路线根本差异
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-三种路线在不同任务上的表现差异" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.3 三种路线在不同任务上的表现差异
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-为什么gpt路线最终成为大模型主流路线" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. 为什么GPT路线最终成为大模型主流路线
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. 为什么GPT路线最终成为大模型主流路线">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-三个决定性因素" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.1 三个决定性因素
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-理论层面的深层原因" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.2 理论层面的深层原因
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-历史路径依赖" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.3 历史路径依赖
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-encoder-only架构的衰落" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.4 Encoder-only架构的衰落
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-xlnet被忽视的中间路线尝试" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. XLNet：被忽视的中间路线尝试
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#二重要论文和来源" class="md-nav__link">
+    <span class="md-ellipsis">
+      二、重要论文和来源
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="二、重要论文和来源">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#核心论文" class="md-nav__link">
+    <span class="md-ellipsis">
+      核心论文
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#重要综述与分析文章" class="md-nav__link">
+    <span class="md-ellipsis">
+      重要综述与分析文章
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#三趋势和信号" class="md-nav__link">
+    <span class="md-ellipsis">
+      三、趋势和信号
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="三、趋势和信号">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-清晰趋势" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.1 清晰趋势
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-早期信号" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.2 早期信号
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#四争议和冲突观点" class="md-nav__link">
+    <span class="md-ellipsis">
+      四、争议和冲突观点
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="四、争议和冲突观点">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#争议一bert-vs-gpt哪种架构更优" class="md-nav__link">
+    <span class="md-ellipsis">
+      争议一：BERT vs GPT哪种架构更优？
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#争议二nsp是否有价值" class="md-nav__link">
+    <span class="md-ellipsis">
+      争议二：NSP是否有价值？
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#争议三encoder-decoder是否还有未来" class="md-nav__link">
+    <span class="md-ellipsis">
+      争议三：Encoder-Decoder是否还有未来？
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#争议四涌现能力是否真实" class="md-nav__link">
+    <span class="md-ellipsis">
+      争议四：涌现能力是否真实？
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#五建议深入研究的领域" class="md-nav__link">
+    <span class="md-ellipsis">
+      五、建议深入研究的领域
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="五、建议深入研究的领域">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-尚未充分探索的方向" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.1 尚未充分探索的方向
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-需要更多数据的方向" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.2 需要更多数据的方向
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#六关键引用索引" class="md-nav__link">
+    <span class="md-ellipsis">
+      六、关键引用索引
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="研究bertgptt5预训练路线分化与演进2018-2020">研究：BERT、GPT、T5预训练路线分化与演进（2018-2020）<a class="headerlink" href="#研究bertgptt5预训练路线分化与演进2018-2020" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>研究时间：2025年7月 | 搜索次数：14次独立搜索 | 覆盖来源：30+<br />
+用途：大模型预训练技术演进书籍第3-5章素材</p>
+</blockquote>
+<hr />
+<h2 id="一关键发现">一、关键发现<a class="headerlink" href="#一关键发现" title="Permanent link">&para;</a></h2>
+<h3 id="1-gpt路线自回归语言模型成为主流第3章素材">1. GPT路线：自回归语言模型成为主流（第3章素材）<a class="headerlink" href="#1-gpt路线自回归语言模型成为主流第3章素材" title="Permanent link">&para;</a></h3>
+<h4 id="11-gpt-12018年6月的历史性突破">1.1 GPT-1（2018年6月）的历史性突破<a class="headerlink" href="#11-gpt-12018年6月的历史性突破" title="Permanent link">&para;</a></h4>
+<p>GPT-1（论文《Improving Language Understanding by Generative Pre-Training》）由OpenAI于2018年6月发布，标志着&rdquo;预训练-微调&rdquo;范式的正式确立 [<sup>22</sup>][<sup>27</sup>][<sup>29</sup>]。其核心设计包括：</p>
+<ul>
+<li><strong>架构</strong>：12层decoder-only Transformer（768维隐层，12个注意力头，3072维前馈层），约117M参数 [<sup>27</sup>][<sup>31</sup>]</li>
+<li><strong>预训练数据</strong>：BooksCorpus（约8亿词），包含数千本未出版小说，强调长连续文本 [<sup>22</sup>][<sup>36</sup>]</li>
+<li><strong>预训练目标</strong>：自回归语言建模（Autoregressive Language Modeling），即基于前文预测下一个token：<br />
+  $<span class="arithmatex">\(L_1(U) = \sum_i \log P(u_i | u_{i-k}, ..., u_{i-1}; \Theta)\)</span>$ [<sup>27</sup>][<sup>31</sup>]</li>
+<li><strong>微调策略</strong>：任务特定的输入转换（traversal-style input transformations）+ 辅助语言建模目标（λ=0.5）[<sup>22</sup>][<sup>36</sup>]</li>
+</ul>
+<p><strong>关键历史意义</strong>：GPT-1证明了单一预训练模型可以通过微调适应多种下游任务（NLI、QA、语义相似度、分类），无需为每个任务重新设计架构 [<sup>36</sup>][<sup>138</sup>]。这一&rdquo;预训练然后微调&rdquo;（pre-train then fine-tune）范式彻底改变了NLP领域的模型开发方式。</p>
+<h4 id="12-为什么next-token-prediction能成为强大的预训练目标">1.2 为什么Next Token Prediction能成为强大的预训练目标<a class="headerlink" href="#12-为什么next-token-prediction能成为强大的预训练目标" title="Permanent link">&para;</a></h4>
+<p>Next token prediction（NTP）的简单性恰恰是其强大之处：</p>
+<ul>
+<li><strong>理论普适性</strong>：研究表明，即使是简单的线性next-token预测器，在Chain-of-Thought数据上训练后，也能近似任何图灵机可高效计算的函数。这证明了&rdquo;自回归next-token预测器是通用学习者&rdquo;（Auto-Regressive Next-Token Predictors are Universal Learners）[<sup>86</sup>]</li>
+<li><strong>密集训练信号</strong>：与BERT仅对15%的mask位置计算损失不同，decoder-only模型对每个token位置都产生训练信号，数据利用效率更高 [<sup>26</sup>]</li>
+<li><strong>通用任务表达</strong>：GPT-2的核心洞察——任何监督任务都可以表达为条件语言模型。翻译任务P(法语|英语)只是P(续写|上下文)的特例 [<sup>141</sup>]</li>
+<li><strong>预训练-推理一致性</strong>：预训练和下游生成均使用相同的自回归分解，无需像BERT那样处理[MASK]在推理时不出现的问题 [<sup>98</sup>]</li>
+</ul>
+<h4 id="13-decoder-only架构的核心优势">1.3 Decoder-only架构的核心优势<a class="headerlink" href="#13-decoder-only架构的核心优势" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>Decoder-only优势</th>
+<th>来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>简单性</strong></td>
+<td>单一均匀层堆叠，易于缩放、并行化和优化</td>
+<td>[<sup>26</sup>][<sup>59</sup>]</td>
+</tr>
+<tr>
+<td><strong>训练效率</strong></td>
+<td>每个token都贡献损失（非仅15% mask），数据效率更高</td>
+<td>[<sup>26</sup>][<sup>59</sup>]</td>
+</tr>
+<tr>
+<td><strong>注意力满秩</strong></td>
+<td>Causal attention矩阵为下三角矩阵，必然满秩；双向attention易退化为低秩</td>
+<td>[<sup>59</sup>][<sup>133</sup>]</td>
+</tr>
+<tr>
+<td><strong>上下文学习</strong></td>
+<td>Prompt和demonstration可视为对模型参数的隐式微调，decoder-only的架构在in-context learning上更有优势</td>
+<td>[<sup>59</sup>]</td>
+</tr>
+<tr>
+<td><strong>效率优化</strong></td>
+<td>支持KV-Cache复用，多轮对话友好；Flash Attention等工具对causal attention支持更好</td>
+<td>[<sup>59</sup>]</td>
+</tr>
+<tr>
+<td><strong>Scaling行为</strong></td>
+<td>超过100B参数后出现涌现能力（in-context learning、chain-of-thought reasoning、code generation）</td>
+<td>[<sup>26</sup>][<sup>90</sup>]</td>
+</tr>
+<tr>
+<td><strong>位置编码</strong></td>
+<td>Causal attention具有隐式位置编码功能，打破Transformer位置不变性</td>
+<td>[<sup>59</sup>]</td>
+</tr>
+</tbody>
+</table>
+<h4 id="14-gpt系列的关键演进节点">1.4 GPT系列的关键演进节点<a class="headerlink" href="#14-gpt系列的关键演进节点" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>年份</th>
+<th>参数量</th>
+<th>核心突破</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-1</td>
+<td>2018</td>
+<td>117M</td>
+<td>预训练+微调范式确立 [<sup>88</sup>][<sup>138</sup>]</td>
+</tr>
+<tr>
+<td>GPT-2</td>
+<td>2019</td>
+<td>1.5B</td>
+<td>零样本能力萌芽，证明语言模型是&rdquo;无监督多任务学习者&rdquo; [<sup>88</sup>][<sup>101</sup>][<sup>141</sup>]</td>
+</tr>
+<tr>
+<td>GPT-3</td>
+<td>2020</td>
+<td>175B</td>
+<td>Few-shot/Zero-shot范式确立，上下文学习（ICL）成为核心能力 [<sup>88</sup>][<sup>91</sup>][<sup>99</sup>]</td>
+</tr>
+</tbody>
+</table>
+<p>GPT-3（论文《Language Models are Few-Shot Learners》，Brown et al., 2020）的175B参数带来了质变：模型无需梯度更新即可从提示中的少量示例学习新任务，催生了提示工程（prompt engineering）这一全新领域 [<sup>89</sup>][<sup>99</sup>][<sup>101</sup>]。</p>
+<hr />
+<h3 id="2-bert路线masked-language-modeling的崛起第4章素材">2. BERT路线：Masked Language Modeling的崛起（第4章素材）<a class="headerlink" href="#2-bert路线masked-language-modeling的崛起第4章素材" title="Permanent link">&para;</a></h3>
+<h4 id="21-bert2018年10月的双向理解革命">2.1 BERT（2018年10月）的双向理解革命<a class="headerlink" href="#21-bert2018年10月的双向理解革命" title="Permanent link">&para;</a></h4>
+<p>BERT（Bidirectional Encoder Representations from Transformers）由Google发布，比GPT-1晚4个月 [<sup>36</sup>]。其核心创新在于<strong>深度双向编码</strong>：</p>
+<ul>
+<li><strong>架构</strong>：Encoder-only（Transformer编码器堆叠），分为BERT-Base（12层，110M参数）和BERT-Large（24层，340M参数）[<sup>28</sup>]</li>
+<li><strong>预训练目标1 - MLM</strong>：随机mask 15%的token，模型基于左右双向上下文预测被mask的token [<sup>19</sup>][<sup>21</sup>]</li>
+<li><strong>预训练目标2 - NSP</strong>：判断句子B是否是句子A的逻辑后续，学习句间关系 [<sup>28</sup>][<sup>54</sup>]</li>
+<li><strong>预训练数据</strong>：BooksCorpus + 英文Wikipedia（约16GB）[<sup>132</sup>]</li>
+</ul>
+<p><strong>双向理解的核心优势</strong>：BERT能同时考虑目标词左侧和右侧的上下文。例如，在&rdquo;The bank account was near the river&rdquo;中，BERT可以通过双向上下文判断&rdquo;bank&rdquo;指金融机构还是河岸 [<sup>55</sup>][<sup>56</sup>]。</p>
+<h4 id="22-mlm的理论价值与局限">2.2 MLM的理论价值与局限<a class="headerlink" href="#22-mlm的理论价值与局限" title="Permanent link">&para;</a></h4>
+<p><strong>价值</strong>：<br />
+- 产生深度双向上下文表示，在NLU任务（分类、NER、抽取式QA）上表现卓越 [<sup>25</sup>]<br />
+- 通过[MASK]机制强迫模型基于上下文推断语义，学习到更丰富的词汇关系 [<sup>21</sup>]</p>
+<p><strong>局限</strong>：<br />
+- <strong>预训练-微调差异</strong>（Pretrain-Finetune Discrepancy）：预训练时有[MASK]，微调时没有，存在目标不一致 [<sup>164</sup>]<br />
+- <strong>生成能力缺失</strong>：Encoder-only架构天然不适合生成任务，只能输出固定长度向量 [<sup>59</sup>][<sup>62</sup>]<br />
+- <strong>独立预测假设</strong>：BERT对每个mask位置独立预测，不考虑预测token之间的依赖关系。例如&rdquo;The [MASK] [MASK] jumps&rdquo;可能预测出&rdquo;brown cat&rdquo;而非更合理的&rdquo;brown fox&rdquo;[<sup>98</sup>]<br />
+- <strong>Mask比例限制</strong>：每轮仅15% token参与损失计算，训练信号密度低于自回归模型 [<sup>26</sup>]</p>
+<h4 id="23-nsp任务的争议与后续处理">2.3 NSP任务的争议与后续处理<a class="headerlink" href="#23-nsp任务的争议与后续处理" title="Permanent link">&para;</a></h4>
+<p>Next Sentence Prediction（NSP）是BERT的第二个预训练目标，但引发了持续的争议：</p>
+<p><strong>NSP设计初衷</strong>：让模型学习句子间关系/连贯性，对NLI、QA等需要跨句推理的任务有帮助 [<sup>28</sup>][<sup>54</sup>]</p>
+<p><strong>对NSP的批评</strong>：<br />
+- <strong>任务冲突</strong>：MLM关注词级理解，NSP关注句间关系，两者优化方向可能不一致 [<sup>57</sup>]<br />
+- <strong>数据构造缺陷</strong>：50%负样本来自不同文档的随机句子组合，与真实语言场景差异大 [<sup>57</sup>]<br />
+- <strong>信息冗余</strong>：仅靠MLM学到的表征已隐含足够的句间关系信息 [<sup>57</sup>]<br />
+- <strong>实际效果有限</strong>：后续研究表明NSP在某些情况下甚至降低性能 [<sup>142</sup>]</p>
+<p><strong>各模型的NSP处理方案</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>NSP处理</th>
+<th>替代机制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RoBERTa (2019)</td>
+<td>完全去除</td>
+<td>用更长连续文本训练（512 tokens），依赖MLM自行捕获句间关系 [<sup>57</sup>][<sup>132</sup>]</td>
+</tr>
+<tr>
+<td>ALBERT (2019)</td>
+<td>改进为SOP</td>
+<td>Sentence Order Prediction——判断两句是否调换顺序 [<sup>51</sup>][<sup>61</sup>]</td>
+</tr>
+<tr>
+<td>ELECTRA (2020)</td>
+<td>完全去除</td>
+<td>Replaced Token Detection（RTD），更细粒度的预训练信号 [<sup>61</sup>]</td>
+</tr>
+</tbody>
+</table>
+<p><strong>RoBERTa的关键发现</strong>（Liu et al., 2019）：BERT被显著欠训练。通过训练更长时间、更大批次、更多数据，去除NSP，使用动态masking，RoBERTa在GLUE上达到88.5分，超越了BERT和XLNet [<sup>132</sup>][<sup>146</sup>]。</p>
+<h4 id="24-bert路线的变体与演进">2.4 BERT路线的变体与演进<a class="headerlink" href="#24-bert路线的变体与演进" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>年份</th>
+<th>核心改进</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RoBERTa</td>
+<td>2019</td>
+<td>去除NSP，动态masking，更大batch，更长训练 [<sup>132</sup>]</td>
+</tr>
+<tr>
+<td>ALBERT</td>
+<td>2019</td>
+<td>因子化嵌入参数化、跨层参数共享、SOP替代NSP [<sup>51</sup>]</td>
+</tr>
+<tr>
+<td>ELECTRA</td>
+<td>2020</td>
+<td>RTD替代MLM，计算效率更高 [<sup>21</sup>]</td>
+</tr>
+<tr>
+<td>DeBERTa</td>
+<td>2020</td>
+<td>解耦注意力矩阵（内容和位置）[<sup>54</sup>]</td>
+</tr>
+<tr>
+<td>DistilBERT</td>
+<td>2019</td>
+<td>知识蒸馏压缩BERT，保留97%能力 [<sup>140</sup>]</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="3-t5bart与统一文本到文本思想第5章素材">3. T5、BART与&rdquo;统一文本到文本&rdquo;思想（第5章素材）<a class="headerlink" href="#3-t5bart与统一文本到文本思想第5章素材" title="Permanent link">&para;</a></h3>
+<h4 id="31-t5text-to-text统一框架">3.1 T5：Text-to-Text统一框架<a class="headerlink" href="#31-t5text-to-text统一框架" title="Permanent link">&para;</a></h4>
+<p>T5（Text-to-Text Transfer Transformer）由Google于2019年提出，202年正式发表（Raffel et al., 2020）[<sup>24</sup>]。其核心理念是<strong>将所有NLP任务统一为文本到文本的转换</strong>：</p>
+<ul>
+<li><strong>架构</strong>：标准Encoder-Decoder Transformer [<sup>35</sup>]</li>
+<li><strong>模型规模</strong>：Base（220M）、Small（60M）、Large（770M）、3B、11B [<sup>24</sup>]</li>
+<li><strong>核心创新 - Text-to-Text范式</strong>：无论任务类型（分类、翻译、摘要、QA），输入输出都是自然语言文本。例如：</li>
+<li>分类：输入&rdquo;sentiment: This movie is great!&rdquo;，输出&rdquo;positive&rdquo; [<sup>35</sup>][<sup>64</sup>]</li>
+<li>翻译：输入&rdquo;translate English to French: Hello world&rdquo;，输出&rdquo;Bonjour le monde&rdquo; [<sup>64</sup>]</li>
+<li>QA：输入&rdquo;question: What is AI? context: &hellip;&rdquo;，输出答案 [<sup>64</sup>]</li>
+</ul>
+<h4 id="32-t5的span-corruption预训练目标">3.2 T5的Span Corruption预训练目标<a class="headerlink" href="#32-t5的span-corruption预训练目标" title="Permanent link">&para;</a></h4>
+<p>T5的核心预训练目标是<strong>Span Corruption</strong>（片段损坏）：</p>
+<ul>
+<li><strong>机制</strong>：随机选择文本中的连续片段（span），用唯一的sentinel token替换，然后由decoder重建这些片段 [<sup>98</sup>][<sup>100</sup>]</li>
+<li><strong>关键参数</strong>：15%损坏率，平均span长度为3个token [<sup>24</sup>][<sup>98</sup>]</li>
+<li><strong>效率优势</strong>：相比BERT的token masking，span corruption将输入序列压缩约10%（如512 token输入压缩至461 token），降低encoder计算量 [<sup>98</sup>][<sup>100</sup>]</li>
+</ul>
+<p><strong>Span Corruption相比Token Masking的优势</strong>：<br />
+1. <strong>更丰富的预测</strong>：生成多个连续token要求建模局部连贯性，而非简单的填词 [<sup>98</sup>]<br />
+2. <strong>内部一致性</strong>：自回归生成确保多token预测彼此一致（如&rdquo;brown fox&rdquo;而非&rdquo;brown cat&rdquo;）[<sup>98</sup>]<br />
+3. <strong>计算效率</strong>：替换span为sentinel token压缩输入，注意力计算成本降低 [<sup>98</sup>][<sup>100</sup>]<br />
+4. <strong>更好的任务适配</strong>：模型学习生成变长输出，为下游生成任务做好准备 [<sup>100</sup>]</p>
+<h4 id="33-bart降噪自编码器">3.3 BART：降噪自编码器<a class="headerlink" href="#33-bart降噪自编码器" title="Permanent link">&para;</a></h4>
+<p>BART（Bidirectional and Auto-Regressive Transformers）由Facebook AI于2019年提出（Lewis et al., 2020）[<sup>53</sup>]。其设计可视为<strong>BERT和GPT的自然结合</strong>：</p>
+<ul>
+<li><strong>架构</strong>：标准Encoder-Decoder Transformer [<sup>53</sup>]</li>
+<li><strong>编码器</strong>：双向（如BERT），处理损坏的输入</li>
+<li><strong>解码器</strong>：自回归（如GPT），生成原始文本</li>
+<li><strong>预训练</strong>：通过任意噪声函数损坏文本，学习重建原始文本 [<sup>53</sup>][<sup>174</sup>]</li>
+</ul>
+<p><strong>BART探索的噪声策略</strong>：<br />
+- Token masking（BERT风格）<br />
+- Token deletion（删除token）<br />
+- Text infilling（span替换为单个mask，类似T5）<br />
+- Sentence permutation（句子顺序打乱）<br />
+- Document rotation（文档旋转）[<sup>53</sup>][<sup>174</sup>]</p>
+<p><strong>最佳组合</strong>：Text infilling + Sentence permutation，在摘要、对话、QA等任务上达到SOTA [<sup>53</sup>]</p>
+<h4 id="34-bart-vs-t5的核心差异">3.4 BART vs T5的核心差异<a class="headerlink" href="#34-bart-vs-t5的核心差异" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>BART</th>
+<th>T5</th>
+<th>来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>损坏输出</td>
+<td>用单个mask替换span</td>
+<td>用sentinel token替换span</td>
+<td>[<sup>174</sup>]</td>
+</tr>
+<tr>
+<td>解码器输出</td>
+<td>完整原始序列</td>
+<td>仅被损坏的spans</td>
+<td>[<sup>174</sup>][<sup>181</sup>]</td>
+</tr>
+<tr>
+<td>训练信号密度</td>
+<td>所有token位置（密集监督）</td>
+<td>仅损坏token</td>
+<td>[<sup>174</sup>]</td>
+</tr>
+<tr>
+<td>Span边界标识</td>
+<td>无显式边界</td>
+<td>Sentinel标记边界</td>
+<td>[<sup>174</sup>]</td>
+</tr>
+<tr>
+<td>优势场景</td>
+<td>摘要、文本纠错、风格转换</td>
+<td>翻译、分类、统一任务框架</td>
+<td>[<sup>174</sup>][<sup>178</sup>]</td>
+</tr>
+</tbody>
+</table>
+<h4 id="35-text-to-text思想的深远影响">3.5 Text-to-Text思想的深远影响<a class="headerlink" href="#35-text-to-text思想的深远影响" title="Permanent link">&para;</a></h4>
+<p>T5的text-to-text框架证明了<strong>任务格式的统一比架构的专门化更重要</strong> [<sup>96</sup>]。这一思想影响了后续工作：<br />
+- <strong>FLAN/T0/InstructGPT</strong>：将instruction tuning引入预训练模型 [<sup>89</sup>]<br />
+- <strong>UL2 (Tay et al., 2022)</strong>：混合多种denoiser目标（span corruption、prefix LM等），统一预训练框架 [<sup>173</sup>]<br />
+- <strong>现代LLM的prompt范式</strong>：GPT系列虽未采用encoder-decoder架构，但继承了T5&rdquo;将所有任务视为文本生成&rdquo;的思想 [<sup>137</sup>]</p>
+<hr />
+<h3 id="4-三种路线的根本差异与优劣对比">4. 三种路线的根本差异与优劣对比<a class="headerlink" href="#4-三种路线的根本差异与优劣对比" title="Permanent link">&para;</a></h3>
+<h4 id="41-架构-目标-能力对照表">4.1 架构-目标-能力对照表<a class="headerlink" href="#41-架构-目标-能力对照表" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>GPT路线（自回归）</th>
+<th>BERT路线（双向编码）</th>
+<th>T5/BART路线（编码器-解码器）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>代表模型</strong></td>
+<td>GPT-&frac12;/3, LLaMA, Claude</td>
+<td>BERT, RoBERTa, ALBERT</td>
+<td>T5, BART, mT5</td>
+</tr>
+<tr>
+<td><strong>架构</strong></td>
+<td>Decoder-only</td>
+<td>Encoder-only</td>
+<td>Encoder-Decoder</td>
+</tr>
+<tr>
+<td><strong>注意力模式</strong></td>
+<td>Causal（单向）</td>
+<td>Bidirectional（双向）</td>
+<td>Encoder双向 + Decoder单向</td>
+</tr>
+<tr>
+<td><strong>预训练目标</strong></td>
+<td>Next token prediction</td>
+<td>Masked language modeling</td>
+<td>Span corruption / Denoising</td>
+</tr>
+<tr>
+<td><strong>核心能力</strong></td>
+<td>文本生成、上下文学习</td>
+<td>深度文本理解</td>
+<td>序列转换（翻译/摘要/QA）</td>
+</tr>
+<tr>
+<td><strong>生成能力</strong></td>
+<td>强（原生）</td>
+<td>弱（无）</td>
+<td>中-强（decoder生成）</td>
+</tr>
+<tr>
+<td><strong>理解能力</strong></td>
+<td>中（仅左上下文）</td>
+<td>强（完整双向上下文）</td>
+<td>强（encoder双向）</td>
+</tr>
+<tr>
+<td><strong>训练信号密度</strong></td>
+<td>高（每个token）</td>
+<td>低（仅15% mask）</td>
+<td>中（仅损坏spans）</td>
+</tr>
+<tr>
+<td><strong>零样本能力</strong></td>
+<td>强（GPT-3后）</td>
+<td>弱（需微调）</td>
+<td>中</td>
+</tr>
+<tr>
+<td><strong>Scaling行为</strong></td>
+<td>涌现能力强</td>
+<td>线性提升</td>
+<td>中等涌现能力</td>
+</tr>
+</tbody>
+</table>
+<p>综合来源：[<sup>22</sup>][<sup>26</sup>][<sup>52</sup>][<sup>55</sup>][<sup>56</sup>][<sup>59</sup>][<sup>62</sup>][<sup>63</sup>]</p>
+<h4 id="42-bert-vs-gpt的技术路线根本差异">4.2 BERT vs GPT的技术路线根本差异<a class="headerlink" href="#42-bert-vs-gpt的技术路线根本差异" title="Permanent link">&para;</a></h4>
+<p><strong>核心差异在于&rdquo;理解&rdquo;与&rdquo;生成&rdquo;的权衡</strong> [<sup>52</sup>][<sup>55</sup>][<sup>62</sup>]：</p>
+<ul>
+<li>
+<p><strong>BERT</strong>（理解导向）：通过双向注意力捕获完整上下文，擅长分类、NER、抽取式QA等理解任务。但无法直接生成文本，每个任务需要重新微调 [<sup>56</sup>][<sup>60</sup>]</p>
+</li>
+<li>
+<p><strong>GPT</strong>（生成导向）：通过自回归建模学习从左到右的序列生成，天然适合对话、写作、代码生成等任务。其单向性限制了双向理解，但在足够规模后可通过in-context learning补偿 [<sup>55</sup>][<sup>56</sup>]</p>
+</li>
+<li>
+<p><strong>上下文机制差异</strong>：BERT同时看到左右上下文；GPT只能看到过去token。这使BERT在消歧（如&rdquo;bank&rdquo;的歧义）上有理论优势 [<sup>56</sup>]</p>
+</li>
+</ul>
+<h4 id="43-三种路线在不同任务上的表现差异">4.3 三种路线在不同任务上的表现差异<a class="headerlink" href="#43-三种路线在不同任务上的表现差异" title="Permanent link">&para;</a></h4>
+<p><strong>理解类任务（GLUE/SQuAD）</strong>：<br />
+- BERT/RoBERTa在GLUE基准上长期领先 [<sup>25</sup>][<sup>132</sup>]<br />
+- Decoder-only模型的zero-shot在NLU任务上仍不如fine-tuned encoder-only模型 [<sup>25</sup>]<br />
+- 但在fine-grained分类中，fine-tuned encoder仍优于大decoder-only模型的特征提取 [<sup>139</sup>]</p>
+<p><strong>生成类任务（摘要/翻译/对话）</strong>：<br />
+- GPT系列在长文本生成上表现卓越 [<sup>55</sup>]<br />
+- BART在abstractive summarization、dialogue上达到SOTA [<sup>53</sup>]<br />
+- T5在翻译、QA上表现出色 [<sup>24</sup>]</p>
+<p><strong>通用性</strong>：<br />
+- GPT路线最终证明了&rdquo;一个架构做所有事&rdquo;的可行性 [<sup>33</sup>]<br />
+- T5/BART的统一框架需要encoder-decoder的复杂性支撑 [<sup>174</sup>]</p>
+<hr />
+<h3 id="5-为什么gpt路线最终成为大模型主流路线">5. 为什么GPT路线最终成为大模型主流路线<a class="headerlink" href="#5-为什么gpt路线最终成为大模型主流路线" title="Permanent link">&para;</a></h3>
+<h4 id="51-三个决定性因素">5.1 三个决定性因素<a class="headerlink" href="#51-三个决定性因素" title="Permanent link">&para;</a></h4>
+<p><strong>因素一：架构简单性（Simplicity）</strong><br />
+- 单一均匀层堆叠，比encoder-decoder的两套参数更易缩放和并行化 [<sup>26</sup>][<sup>59</sup>]<br />
+- 统一的目标函数（next token prediction），无需设计复杂的denoising方案 [<sup>33</sup>]<br />
+- OpenAI作为开拓者摸索出scaling law，后来者因时间和计算成本不愿做架构大改动 [<sup>59</sup>]</p>
+<p><strong>因素二：训练效率（Training Efficiency）</strong><br />
+- 每个训练token都贡献损失，BERT仅15% mask [<sup>26</sup>]<br />
+- KV-Cache支持高效推理复用，多轮对话友好 [<sup>59</sup>]<br />
+- Flash Attention、Megatron等工具对causal attention支持更成熟 [<sup>59</sup>]</p>
+<p><strong>因素三：涌现能力（Emergent Abilities）</strong><br />
+- GPT-3（175B）首次系统展示了in-context learning、few-shot learning等涌现能力 [<sup>88</sup>][<sup>91</sup>]<br />
+- 随规模增长出现的chain-of-thought reasoning、code generation、多步算术等能力 [<sup>90</sup>]<br />
+- 这些涌现能力在encoder-decoder和encoder-only架构的同等计算规模下未观察到 [<sup>26</sup>]</p>
+<h4 id="52-理论层面的深层原因">5.2 理论层面的深层原因<a class="headerlink" href="#52-理论层面的深层原因" title="Permanent link">&para;</a></h4>
+<p><strong>1. 注意力满秩性</strong><br />
+- Causal attention矩阵是下三角矩阵，必然满秩（softmax保证对角元正，行列式为正）<br />
+- 双向attention矩阵来自低秩分解矩阵与softmax的乘积，存在低秩退化问题 [<sup>59</sup>][<sup>133</sup>]</p>
+<p><strong>2. 预训练难度-学习上限权衡</strong><br />
+- Decoder-only + next token prediction：每个位置能接触的信息比其他架构更少，预测难度更高<br />
+- 当模型足够大、数据足够多时，更高的预训练难度带来更高的通用表征学习上限 [<sup>59</sup>]</p>
+<p><strong>3. 上下文学习的架构亲和性</strong><br />
+- Prompt和demonstration可视为对模型参数的隐式微调<br />
+- Decoder-only架构中prompt更直接作用于decoder每层参数，微调信号更强 [<sup>59</sup>]</p>
+<p><strong>4. 位置编码的隐性优势</strong><br />
+- Causal attention具有隐式位置编码功能，打破Transformer位置不变性<br />
+- 双向attention模型如果不带位置编码，token可对换而不改变表示，对语序区分能力弱 [<sup>59</sup>]</p>
+<h4 id="53-历史路径依赖">5.3 历史路径依赖<a class="headerlink" href="#53-历史路径依赖" title="Permanent link">&para;</a></h4>
+<ul>
+<li>OpenAI以decoder-only架构为基础摸索出有效的训练方法和scaling law</li>
+<li>GPT-2/GPT-3的成功验证了这一路线的可扩展性</li>
+<li>工程生态形成先发优势：Megatron、Flash Attention、DeepSpeed等重要工具优先支持decoder-only [<sup>59</sup>]</li>
+<li>到2025年，所有前沿模型（GPT-&#8536;、Claude、Gemini、Llama）均采用decoder-only架构 [<sup>26</sup>]</li>
+</ul>
+<h4 id="54-encoder-only架构的衰落">5.4 Encoder-only架构的衰落<a class="headerlink" href="#54-encoder-only架构的衰落" title="Permanent link">&para;</a></h4>
+<p>Encoder-only架构（BERT类）的衰落并非因为性能不佳，而是因为：<br />
+1. <strong>任务范围受限</strong>：不擅长生成任务，做NLU一般需要下游数据微调 [<sup>59</sup>]<br />
+2. <strong>Zero-shot泛化差</strong>：Decoder-only模型在各种下游任务的zero-shot泛化性能更好 [<sup>59</sup>]<br />
+3. <strong>Scaling Law不显著</strong>：不像decoder-only那样在超大规模下出现涌现能力 [<sup>26</sup>]</p>
+<p><strong>但需注意</strong>：BERT在特定理解任务（如语义搜索、细粒度分类）上仍有价值 [<sup>26</sup>][<sup>139</sup>]</p>
+<hr />
+<h3 id="6-xlnet被忽视的中间路线尝试">6. XLNet：被忽视的中间路线尝试<a class="headerlink" href="#6-xlnet被忽视的中间路线尝试" title="Permanent link">&para;</a></h3>
+<p>XLNet（Yang et al., 2019）试图融合自回归和双向编码的优势 [<sup>166</sup>][<sup>168</sup>]：</p>
+<ul>
+<li><strong>核心创新</strong>：Permutation Language Modeling（排列语言建模），通过随机排列token顺序进行自回归训练，使模型在保持自回归特性的同时学习双向依赖 [<sup>163</sup>][<sup>164</sup>]</li>
+<li><strong>架构</strong>：基于Transformer-XL，引入two-stream self-attention机制 [<sup>166</sup>]</li>
+<li><strong>目标</strong>：取BERT和GPT各自优点，解决BERT的独立性假设（预测token之间不依赖）和预训练-微调差异 [<sup>165</sup>][<sup>180</sup>]</li>
+<li><strong>效果</strong>：在QA、NLI、情感分析等任务上超越BERT [<sup>166</sup>]</li>
+<li><strong>历史地位</strong>：虽然技术上创新，但未能改变decoder-only最终主导的趋势。其排列训练复杂度高，且未能展示出decoder-only那样的scaling潜力。</li>
+</ul>
+<hr />
+<h2 id="二重要论文和来源">二、重要论文和来源<a class="headerlink" href="#二重要论文和来源" title="Permanent link">&para;</a></h2>
+<h3 id="核心论文">核心论文<a class="headerlink" href="#核心论文" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>论文</th>
+<th>作者</th>
+<th>年份</th>
+<th>贡献</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>Improving Language Understanding by Generative Pre-Training</em></td>
+<td>Radford et al. (OpenAI)</td>
+<td>2018年6月</td>
+<td>GPT-1，预训练+微调范式 [<sup>27</sup>][<sup>36</sup>]</td>
+</tr>
+<tr>
+<td><em>BERT: Pre-training of Deep Bidirectional Transformers</em></td>
+<td>Devlin et al. (Google)</td>
+<td>2018年10月</td>
+<td>双向编码MLM [<sup>19</sup>][<sup>21</sup>]</td>
+</tr>
+<tr>
+<td><em>Language Models are Unsupervised Multitask Learners</em></td>
+<td>Radford et al. (OpenAI)</td>
+<td>2019年2月</td>
+<td>GPT-2，零样本能力 [<sup>88</sup>][<sup>101</sup>][<sup>141</sup>]</td>
+</tr>
+<tr>
+<td><em>XLNet: Generalized Autoregressive Pretraining</em></td>
+<td>Yang et al.</td>
+<td>2019年6月</td>
+<td>排列语言建模 [<sup>166</sup>][<sup>168</sup>]</td>
+</tr>
+<tr>
+<td><em>RoBERTa: A Robustly Optimized BERT Pretraining Approach</em></td>
+<td>Liu et al. (Facebook)</td>
+<td>2019年7月</td>
+<td>BERT训练优化 [<sup>132</sup>][<sup>146</sup>]</td>
+</tr>
+<tr>
+<td><em>Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer</em></td>
+<td>Raffel et al. (Google)</td>
+<td>2019/2020</td>
+<td>T5，text-to-text统一框架 [<sup>24</sup>][<sup>35</sup>]</td>
+</tr>
+<tr>
+<td><em>BART: Denoising Sequence-to-Sequence Pre-training</em></td>
+<td>Lewis et al. (Facebook)</td>
+<td>2019/2020</td>
+<td>降噪自编码器 [<sup>53</sup>][<sup>174</sup>]</td>
+</tr>
+<tr>
+<td><em>Language Models are Few-Shot Learners</em></td>
+<td>Brown et al. (OpenAI)</td>
+<td>2020年5月</td>
+<td>GPT-3，ICL，175B [<sup>88</sup>][<sup>91</sup>]</td>
+</tr>
+<tr>
+<td><em>Scaling Laws for Neural Language Models</em></td>
+<td>Kaplan et al. (OpenAI)</td>
+<td>2020年1月</td>
+<td>Scaling law [<sup>85</sup>][<sup>101</sup>]</td>
+</tr>
+<tr>
+<td><em>Training Compute-Optimal Large Language Models (Chinchilla)</em></td>
+<td>Hoffmann et al. (DeepMind)</td>
+<td>2022年3月</td>
+<td>Chinchilla最优比例 [<sup>85</sup>][<sup>92</sup>]</td>
+</tr>
+</tbody>
+</table>
+<h3 id="重要综述与分析文章">重要综述与分析文章<a class="headerlink" href="#重要综述与分析文章" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>来源</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Michael Brenndoerfer的GPT-1/GPT-3/BART/T5深度解析系列</td>
+<td>最详细的技术教程级分析 [<sup>36</sup>][<sup>99</sup>][<sup>174</sup>]</td>
+</tr>
+<tr>
+<td><em>Auto-Regressive Next-Token Predictors are Universal Learners</em></td>
+<td>NTP的理论普适性证明 [<sup>86</sup>]</td>
+</tr>
+<tr>
+<td><em>A Survey on Transfer Learning in NLP</em> (Ruder et al., 2020)</td>
+<td>NLP迁移学习全面综述 [<sup>166</sup>]</td>
+</tr>
+<tr>
+<td><em>Survey of different LLM Architectures</em> (2024)</td>
+<td>LLM架构趋势综述 [<sup>51</sup>]</td>
+</tr>
+<tr>
+<td><em>Bidirectional Encoders vs. Causal Decoders</em> (2025)</td>
+<td>Encoder vs Decoder的实证对比 [<sup>139</sup>]</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="三趋势和信号">三、趋势和信号<a class="headerlink" href="#三趋势和信号" title="Permanent link">&para;</a></h2>
+<h3 id="31-清晰趋势">3.1 清晰趋势<a class="headerlink" href="#31-清晰趋势" title="Permanent link">&para;</a></h3>
+<ol type="1">
+<li><strong>从&rdquo;专门化架构&rdquo;到&rdquo;统一架构&rdquo;</strong>：2018年GPT-1/BERT各自为不同任务设计；2020年后统一范式成为共识 [<sup>137</sup>]</li>
+<li><strong>从&rdquo;微调&rdquo;到&rdquo;提示&rdquo;</strong>：GPT-3的ICL能力将AI开发从&rdquo;收集数据训练模型&rdquo;转变为&rdquo;编写提示构建编排&rdquo; [<sup>89</sup>][<sup>137</sup>]</li>
+<li><strong>Scale is All You Need</strong>：GPT-1→GPT-2→GPT-3的演进证明规模本身就能解锁新能力 [<sup>90</sup>][<sup>101</sup>]</li>
+<li><strong>Decoder-only最终统一LLM领域</strong>：2020年前三种路线并存；2023年后decoder-only成为绝对主流 [<sup>26</sup>][<sup>59</sup>]</li>
+</ol>
+<h3 id="32-早期信号">3.2 早期信号<a class="headerlink" href="#32-早期信号" title="Permanent link">&para;</a></h3>
+<ol type="1">
+<li><strong>GPT-1的设计选择预示了未来</strong>：其架构的简单性、统一性和可扩展性在发布时看似平凡，事后证明是关键优势 [<sup>36</sup>]</li>
+<li><strong>BERT的双向性既是优势也是限制</strong>：深度双向理解使BERT短期领先，但encoder-only限制了其在生成任务和scaling上的天花板 [<sup>59</sup>]</li>
+<li><strong>T5的text-to-text思想超越了其架构</strong>：T5的统一框架影响了后续所有LLM，即使encoder-decoder架构本身未成为主流 [<sup>137</sup>]</li>
+</ol>
+<hr />
+<h2 id="四争议和冲突观点">四、争议和冲突观点<a class="headerlink" href="#四争议和冲突观点" title="Permanent link">&para;</a></h2>
+<h3 id="争议一bert-vs-gpt哪种架构更优">争议一：BERT vs GPT哪种架构更优？<a class="headerlink" href="#争议一bert-vs-gpt哪种架构更优" title="Permanent link">&para;</a></h3>
+<p><strong>支持BERT的观点</strong>：<br />
+- 双向编码提供更深度的上下文理解，在NLU任务上长期领先 [<sup>25</sup>]<br />
+- Fine-tuned encoder在细粒度分类任务上仍优于大decoder-only模型的特征提取 [<sup>139</sup>]<br />
+- Decoder-only的next-token prediction优化导致序列偏置（sequence bias），不适合序列级语义压缩 [<sup>139</sup>]</p>
+<p><strong>支持GPT的观点</strong>：<br />
+- 架构简单性使scaling更容易，涌现能力只在decoder-only中观察到 [<sup>26</sup>]<br />
+- 统一范式覆盖所有任务（理解和生成），BERT只能做理解 [<sup>33</sup>]<br />
+- 实际应用价值：chatbot、代码助手等生成场景比分类任务商业价值更高 [<sup>64</sup>]</p>
+<p><strong>当前共识</strong>：任务依赖。BERT在语义搜索、分类上仍有价值；GPT在通用对话和生成上全面领先 [<sup>26</sup>]</p>
+<h3 id="争议二nsp是否有价值">争议二：NSP是否有价值？<a class="headerlink" href="#争议二nsp是否有价值" title="Permanent link">&para;</a></h3>
+<ul>
+<li>RoBERTa的实验表明去除NSP反而提升性能 [<sup>132</sup>]</li>
+<li>但ALBERT的SOP（句子顺序预测）保留了NSP的某种变体，且有效 [<sup>51</sup>]</li>
+<li>核心争议：NSP的负样本构造过于简单（随机跨文档采样），导致模型学到的是主题匹配而非真正连贯性 [<sup>57</sup>]</li>
+</ul>
+<h3 id="争议三encoder-decoder是否还有未来">争议三：Encoder-Decoder是否还有未来？<a class="headerlink" href="#争议三encoder-decoder是否还有未来" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>悲观观点</strong>：Decoder-only在scaling上表现更好，encoder-decoder的复杂性未带来足够回报 [<sup>26</sup>][<sup>59</sup>]</li>
+<li><strong>乐观观点</strong>：Encoder-decoder在翻译、摘要等seq2seq任务上仍有优势；T5-11B在某些任务上匹敌GPT-3 [<sup>24</sup>]</li>
+<li><strong>中间立场</strong>：Encoder-decoder的思想（如span corruption）被decoder-only架构借鉴（如FIM fill-in-the-middle）[<sup>100</sup>]</li>
+</ul>
+<h3 id="争议四涌现能力是否真实">争议四：涌现能力是否真实？<a class="headerlink" href="#争议四涌现能力是否真实" title="Permanent link">&para;</a></h3>
+<ul>
+<li>涌现能力（emergent abilities）指模型在特定规模阈值后突然出现新能力 [<sup>85</sup>]</li>
+<li>质疑：某些&rdquo;涌现&rdquo;可能只是in-context learning的测量产物 [<sup>87</sup>]</li>
+<li>但GPT-3的few-shot learning在规模增长上的跃升模式难以用连续改进解释 [<sup>99</sup>]</li>
+</ul>
+<hr />
+<h2 id="五建议深入研究的领域">五、建议深入研究的领域<a class="headerlink" href="#五建议深入研究的领域" title="Permanent link">&para;</a></h2>
+<h3 id="51-尚未充分探索的方向">5.1 尚未充分探索的方向<a class="headerlink" href="#51-尚未充分探索的方向" title="Permanent link">&para;</a></h3>
+<ol type="1">
+<li>
+<p><strong>因果注意力vs双向注意力的表达能力理论</strong>：满秩性论证需要更严格的理论分析，特别是不同架构的VC维/Rademacher复杂度比较 [<sup>59</sup>][<sup>133</sup>]</p>
+</li>
+<li>
+<p><strong>Encoder-decoder在特定垂直领域的价值</strong>：虽然decoder-only主导通用LLM，但在翻译（尤其低资源语言）、结构化摘要等任务上，encoder-decoder是否仍有优势？</p>
+</li>
+<li>
+<p><strong>MLM与NTP的表示学习差异</strong>：BERT的双向表示和GPT的单向表示在语义空间中的几何差异是什么？是否有系统性的探测研究？</p>
+</li>
+<li>
+<p><strong>混合架构的可能性</strong>：UniLM（Dong et al., 2019）尝试用不同attention mask统一多种目标，但后续未被广泛采用。混合架构的失败教训值得总结 [<sup>166</sup>][<sup>173</sup>]</p>
+</li>
+<li>
+<p><strong>从T5到Instruction Tuning的演进链</strong>：T5的text-to-text思想→FLAN/T0的instruction tuning→InstructGPT的RLHF，这一思想演变线的完整梳理</p>
+</li>
+<li>
+<p><strong>Scaling Law的架构依赖性</strong>：Kaplan (2020)和Chinchilla (Hoffmann, 2022)的研究主要基于decoder-only。Encoder-only和encoder-decoder的scaling行为是否有本质不同？[<sup>85</sup>][<sup>92</sup>]</p>
+</li>
+</ol>
+<h3 id="52-需要更多数据的方向">5.2 需要更多数据的方向<a class="headerlink" href="#52-需要更多数据的方向" title="Permanent link">&para;</a></h3>
+<ol type="1">
+<li><strong>BART在翻译和摘要上的详细实验设置</strong>：BART论文中声称在某些任务上优于T5，需要更深入的分析</li>
+<li><strong>GPT-3训练数据的精确构成</strong>：虽然已知包含Common Crawl、WebText、Books、Wikipedia，但各部分的精确比例和清洗过程仍有不透明之处</li>
+<li><strong>不同架构在相同计算预算下的公平对比</strong>：现有研究往往在不同规模/数据/训练时间下比较，需要控制变量的系统性研究</li>
+</ol>
+<hr />
+<h2 id="六关键引用索引">六、关键引用索引<a class="headerlink" href="#六关键引用索引" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>引用编号</th>
+<th>来源</th>
+<th>内容要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>[<sup>19</sup>]</td>
+<td>arXiv review (2024)</td>
+<td>BERT的MLM和NSP目标</td>
+</tr>
+<tr>
+<td>[<sup>21</sup>]</td>
+<td>arXiv survey (2024)</td>
+<td>Encoder-only架构分析</td>
+</tr>
+<tr>
+<td>[<sup>22</sup>]</td>
+<td>FreeCodeCamp GPT-1 review</td>
+<td>GPT-1架构和预训练细节</td>
+</tr>
+<tr>
+<td>[<sup>24</sup>]</td>
+<td>T5 notes</td>
+<td>T5训练细节和数据集</td>
+</tr>
+<tr>
+<td>[<sup>25</sup>]</td>
+<td>arXiv GLUE paper (2023)</td>
+<td>Encoder-only在NLU上的优势</td>
+</tr>
+<tr>
+<td>[<sup>26</sup>]</td>
+<td>Let&rsquo;s Data Science blog</td>
+<td>Decoder-only为什么获胜</td>
+</tr>
+<tr>
+<td>[<sup>27</sup>]</td>
+<td>Luna Dong paper summary</td>
+<td>GPT-1公式和架构细节</td>
+</tr>
+<tr>
+<td>[<sup>28</sup>]</td>
+<td>arXiv Java TD detection</td>
+<td>BERT的MLM和NSP描述</td>
+</tr>
+<tr>
+<td>[<sup>29</sup>]</td>
+<td>BioErrorLog GPT-1 notes</td>
+<td>GPT-1方法总结</td>
+</tr>
+<tr>
+<td>[<sup>31</sup>]</td>
+<td>Juejin GPT-1 notes</td>
+<td>GPT-1公式和训练细节</td>
+</tr>
+<tr>
+<td>[<sup>33</sup>]</td>
+<td>C# Corner decoder-only</td>
+<td>为什么现代LLM是decoder-only</td>
+</tr>
+<tr>
+<td>[<sup>35</sup>]</td>
+<td>CSDN T5 blog</td>
+<td>T5与原始Transformer区别</td>
+</tr>
+<tr>
+<td>[<sup>36</sup>]</td>
+<td>Brenndoerfer GPT-1</td>
+<td>GPT-1历史意义深度分析</td>
+</tr>
+<tr>
+<td>[<sup>51</sup>]</td>
+<td>arXiv LLM Architecture Survey</td>
+<td>ALBERT的SOP改进</td>
+</tr>
+<tr>
+<td>[<sup>52</sup>]</td>
+<td>arXiv BERT vs GPT</td>
+<td>BERT vs GPT详细对比</td>
+</tr>
+<tr>
+<td>[<sup>53</sup>]</td>
+<td>BART paper (Lewis et al., 2020)</td>
+<td>BART denoising autoencoder</td>
+</tr>
+<tr>
+<td>[<sup>55</sup>]</td>
+<td>Udemy BERT vs GPT</td>
+<td>BERT vs GPT通俗对比</td>
+</tr>
+<tr>
+<td>[<sup>56</sup>]</td>
+<td>Milvus AI BERT vs GPT</td>
+<td>架构和目标差异</td>
+</tr>
+<tr>
+<td>[<sup>57</sup>]</td>
+<td>CSDN RoBERTa Chinese</td>
+<td>NSP争议和RoBERTa改进</td>
+</tr>
+<tr>
+<td>[<sup>59</sup>]</td>
+<td>CSDN/cnblogs 三大架构</td>
+<td>Decoder-only优势详细分析</td>
+</tr>
+<tr>
+<td>[<sup>60</sup>]</td>
+<td>AI Cassandra encoder vs decoder</td>
+<td>GPT选择decoder-only路径</td>
+</tr>
+<tr>
+<td>[<sup>61</sup>]</td>
+<td>Cnblogs BERT面经</td>
+<td>NSP替代方案汇总</td>
+</tr>
+<tr>
+<td>[<sup>62</sup>]</td>
+<td>Cnblogs encoder-decoder BERT GPT</td>
+<td>BERT vs GPT巅峰对决</td>
+</tr>
+<tr>
+<td>[<sup>63</sup>]</td>
+<td>Systems-analysis encoder-decoder</td>
+<td>架构比较</td>
+</tr>
+<tr>
+<td>[<sup>64</sup>]</td>
+<td>CSDN三大架构解析</td>
+<td>Encoder-Only/Decoder-Only/Encoder-Decoder详解</td>
+</tr>
+<tr>
+<td>[<sup>85</sup>]</td>
+<td>arXiv scaling law paper</td>
+<td>Scaling law和涌现能力</td>
+</tr>
+<tr>
+<td>[<sup>86</sup>]</td>
+<td>arXiv NTP Universal Learners</td>
+<td>Next-token predictors的通用学习能力</td>
+</tr>
+<tr>
+<td>[<sup>87</sup>]</td>
+<td>arXiv emergent abilities ICL</td>
+<td>涌现能力与ICL的关系</td>
+</tr>
+<tr>
+<td>[<sup>88</sup>]</td>
+<td>FreeCodeCamp GPT-3 review</td>
+<td>GPT-3 few-shot vs zero-shot</td>
+</tr>
+<tr>
+<td>[<sup>89</sup>]</td>
+<td>Juejin prompt engineering</td>
+<td>Prompt engineering发展史</td>
+</tr>
+<tr>
+<td>[<sup>90</sup>]</td>
+<td>LumiChats GPT decoder-only</td>
+<td>GPT系列能力和涌现</td>
+</tr>
+<tr>
+<td>[<sup>91</sup>]</td>
+<td>Marovi GPT-3</td>
+<td>GPT-3 175B ICL</td>
+</tr>
+<tr>
+<td>[<sup>92</sup>]</td>
+<td>CodeForgeAI scaling laws</td>
+<td>GPT系列scaling law详细时间线</td>
+</tr>
+<tr>
+<td>[<sup>96</sup>]</td>
+<td>Zenodo BERT GPT T5 comparison</td>
+<td>三模型比较研究</td>
+</tr>
+<tr>
+<td>[<sup>98</sup>]</td>
+<td>Brenndoerfer T5 span corruption</td>
+<td>Span corruption优于token masking</td>
+</tr>
+<tr>
+<td>[<sup>99</sup>]</td>
+<td>Brenndoerfer GPT-3</td>
+<td>GPT-3 scale和ICL发现</td>
+</tr>
+<tr>
+<td>[<sup>100</sup>]</td>
+<td>Brenndoerfer span corruption</td>
+<td>Span corruption深度解析</td>
+</tr>
+<tr>
+<td>[<sup>101</sup>]</td>
+<td>Substack Transformers to ChatGPT</td>
+<td>GPT-2/GPT-3/scaling law里程碑</td>
+</tr>
+<tr>
+<td>[<sup>132</sup>]</td>
+<td>RoBERTa paper (Liu et al., 2019)</td>
+<td>RoBERTa对BERT的改进</td>
+</tr>
+<tr>
+<td>[<sup>133</sup>]</td>
+<td>arXiv LAMP motion</td>
+<td>Causal attention满秩性证明</td>
+</tr>
+<tr>
+<td>[<sup>137</sup>]</td>
+<td>Wasil Zafar AI evolution</td>
+<td>预训练-微调范式转移</td>
+</tr>
+<tr>
+<td>[<sup>138</sup>]</td>
+<td>Junming&rsquo;s Note GPT evolution</td>
+<td>GPT系列演进分析</td>
+</tr>
+<tr>
+<td>[<sup>139</sup>]</td>
+<td>arXiv Bidirectional vs Causal (2025)</td>
+<td>Encoder vs Decoder实证对比</td>
+</tr>
+<tr>
+<td>[<sup>141</sup>]</td>
+<td>Socratopia GPT-2 close read</td>
+<td>GPT-2零样本能力深度分析</td>
+</tr>
+<tr>
+<td>[<sup>146</sup>]</td>
+<td>RoBERTa paper PDF</td>
+<td>RoBERTa完整技术细节</td>
+</tr>
+<tr>
+<td>[<sup>163</sup>]</td>
+<td>arXiv diffusion alignment</td>
+<td>XLNet排列语言建模</td>
+</tr>
+<tr>
+<td>[<sup>164</sup>]</td>
+<td>arXiv masking data generation</td>
+<td>XLNet和T5描述</td>
+</tr>
+<tr>
+<td>[<sup>166</sup>]</td>
+<td>arXiv Survey Transfer Learning NLP</td>
+<td>NLP迁移学习全面综述</td>
+</tr>
+<tr>
+<td>[<sup>167</sup>]</td>
+<td>arXiv Survey Deep Learning</td>
+<td>预训练语言模型分类</td>
+</tr>
+<tr>
+<td>[<sup>168</sup>]</td>
+<td>arXiv Survey Deep Learning (2022)</td>
+<td>T5/BART/XLNet描述</td>
+</tr>
+<tr>
+<td>[<sup>172</sup>]</td>
+<td>MDPI Autoencoders in NLP</td>
+<td>BART和T5从自编码视角对比</td>
+</tr>
+<tr>
+<td>[<sup>173</sup>]</td>
+<td>arXiv token order prediction</td>
+<td>UL2和denoising目标统一</td>
+</tr>
+<tr>
+<td>[<sup>174</sup>]</td>
+<td>Brenndoerfer BART pretraining</td>
+<td>BART denoising策略深度分析</td>
+</tr>
+<tr>
+<td>[<sup>176</sup>]</td>
+<td>ShadeCoder bidirectional vs autoregressive</td>
+<td>2025年Transformer架构指南</td>
+</tr>
+<tr>
+<td>[<sup>178</sup>]</td>
+<td>AIML T5 architecture</td>
+<td>T5和BART对比</td>
+</tr>
+<tr>
+<td>[<sup>180</sup>]</td>
+<td>MDPI depression detection</td>
+<td>XLNet描述</td>
+</tr>
+<tr>
+<td>[<sup>181</sup>]</td>
+<td>Lilys AI BART vs T5</td>
+<td>BART和T5 denoising方法对比</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<blockquote>
+<p><strong>文件生成时间</strong>：2025年7月<br />
+<strong>搜索覆盖</strong>：14次独立搜索，30+来源<br />
+<strong>研究范围</strong>：2018-2020年预训练路线分化，延伸至2025年评估</p>
+</blockquote>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.select", "content.tooltips"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.60a45f97.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  <script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(() => { lightbox.reload() });
+</script></body>
+</html>

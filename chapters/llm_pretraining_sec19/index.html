@@ -1,0 +1,2371 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="从 Scaling Law 到数据配方与分布式训练">
+      
+      
+      
+        <link rel="canonical" href="https://deadpoppy.github.io/llm-pretraining-evolution-book/chapters/llm_pretraining_sec19/">
+      
+      
+        <link rel="prev" href="../llm_pretraining_sec18/">
+      
+      
+        <link rel="next" href="../llm_pretraining_sec20/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.50">
+    
+    
+      
+        <title>第19章 3D 并行与千卡训练 - 大语言模型预训练技术演进</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.a40c8224.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+SC:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Noto Sans SC";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/book.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+   <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
+    html.glightbox-open { overflow: initial; height: 100%; }
+    .gslide-title { margin-top: 0px; user-select: text; }
+    .gslide-desc { color: #666; user-select: text; }
+    .gslide-image img { background: white; }
+    .gscrollbar-fixer { padding-right: 15px; }
+    .gdesc-inner { font-size: 0.75rem; }
+    body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
+    body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
+    body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}</style> <script src="../../assets/javascripts/glightbox.min.js"></script></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#第19章-2021-20233d-并行与千卡训练" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="大语言模型预训练技术演进" class="md-header__button md-logo" aria-label="大语言模型预训练技术演进" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            大语言模型预训练技术演进
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              第19章 3D 并行与千卡训练
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="teal"  aria-label="切换到深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="teal"  aria-label="切换到浅色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/deadpoppy/llm-pretraining-evolution-book" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    deadpoppy/llm-pretraining-evolution-book
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../llm_pretraining_sec00/" class="md-tabs__link">
+          
+  
+    
+  
+  正文
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../full-book/" class="md-tabs__link">
+          
+  
+    
+  
+  附录
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../research/llm_pretraining_wide01/" class="md-tabs__link">
+          
+  
+    
+  
+  研究材料
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="大语言模型预训练技术演进" class="md-nav__button md-logo" aria-label="大语言模型预训练技术演进" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    大语言模型预训练技术演进
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/deadpoppy/llm-pretraining-evolution-book" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    deadpoppy/llm-pretraining-evolution-book
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    首页
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    正文
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            正文
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec00/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    导读
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec01/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第1章 预训练的前史
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec02/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第2章 Transformer 改变底层结构
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec03/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第3章 GPT 路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec04/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第4章 BERT 路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec05/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第5章 T5、BART 与统一文本到文本
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec06/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第6章 Tokenizer 的核心问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec07/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第7章 BPE 到 Byte-level Tokenizer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec08/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第8章 Tokenizer 的新问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec09/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第9章 Scaling Law 的提出
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec10/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第10章 GPT-3 与大模型涌现
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec11/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第11章 Chinchilla Scaling Law
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec12/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第12章 Scaling Law 的新阶段
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec13/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第13章 预训练数据的基本构成
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec14/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第14章 大规模语料堆叠阶段
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec15/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第15章 数据配比成为核心技术
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec16/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第16章 数据配比的新趋势
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec17/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第17章 分布式训练的基本矛盾
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec18/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第18章 并行训练的三大路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    第19章 3D 并行与千卡训练
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    第19章 3D 并行与千卡训练
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#191-数据并行张量并行流水线并行的组合" class="md-nav__link">
+    <span class="md-ellipsis">
+      19.1 数据并行、张量并行、流水线并行的组合
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="19.1 数据并行、张量并行、流水线并行的组合">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#3d-并行的概念" class="md-nav__link">
+    <span class="md-ellipsis">
+      3D 并行的概念
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gpu-三维网格的组织方式" class="md-nav__link">
+    <span class="md-ellipsis">
+      GPU 三维网格的组织方式
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#并行维度的选择策略" class="md-nav__link">
+    <span class="md-ellipsis">
+      并行维度的选择策略
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#192-megatron-lm-与-deepspeed-的系统化贡献" class="md-nav__link">
+    <span class="md-ellipsis">
+      19.2 Megatron-LM 与 DeepSpeed 的系统化贡献
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="19.2 Megatron-LM 与 DeepSpeed 的系统化贡献">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#megatron-lm-的-tp-工程化" class="md-nav__link">
+    <span class="md-ellipsis">
+      Megatron-LM 的 TP 工程化
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deepspeed-zero-的-dp-优化" class="md-nav__link">
+    <span class="md-ellipsis">
+      DeepSpeed ZeRO 的 DP 优化
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#两大框架的互补融合" class="md-nav__link">
+    <span class="md-ellipsis">
+      两大框架的互补融合
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#193-checkpoint激活重计算与显存优化" class="md-nav__link">
+    <span class="md-ellipsis">
+      19.3 Checkpoint、激活重计算与显存优化
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="19.3 Checkpoint、激活重计算与显存优化">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#激活重计算用计算换显存" class="md-nav__link">
+    <span class="md-ellipsis">
+      激活重计算：用计算换显存
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#选择性重计算策略" class="md-nav__link">
+    <span class="md-ellipsis">
+      选择性重计算策略
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#显存优化的综合效果" class="md-nav__link">
+    <span class="md-ellipsis">
+      显存优化的综合效果
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#194-通信拓扑带宽和训练效率" class="md-nav__link">
+    <span class="md-ellipsis">
+      19.4 通信拓扑、带宽和训练效率
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="19.4 通信拓扑、带宽和训练效率">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nvlink-与-infiniband-的带宽鸿沟" class="md-nav__link">
+    <span class="md-ellipsis">
+      NVLink 与 InfiniBand 的带宽鸿沟
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#通信-计算重叠" class="md-nav__link">
+    <span class="md-ellipsis">
+      通信-计算重叠
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mfu训练效率的核心指标" class="md-nav__link">
+    <span class="md-ellipsis">
+      MFU：训练效率的核心指标
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#195-从能训练走向高效稳定地训练" class="md-nav__link">
+    <span class="md-ellipsis">
+      19.5 从&rdquo;能训练&rdquo;走向&rdquo;高效稳定地训练&rdquo;
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="19.5 从”能训练”走向”高效稳定地训练”">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#千卡训练的稳定性挑战" class="md-nav__link">
+    <span class="md-ellipsis">
+      千卡训练的稳定性挑战
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#三级容错策略" class="md-nav__link">
+    <span class="md-ellipsis">
+      三级容错策略
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deepseek-v3-的工程案例" class="md-nav__link">
+    <span class="md-ellipsis">
+      DeepSeek-V3 的工程案例
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#从能跑到跑得省" class="md-nav__link">
+    <span class="md-ellipsis">
+      从&rdquo;能跑&rdquo;到&rdquo;跑得省&rdquo;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec20/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第20章 长上下文与高效 Attention
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec21/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第21章 新一代训练系统趋势
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec22/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第22章 MoE 稀疏激活模型
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec23/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第23章 Multi-token Prediction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec24/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第24章 长上下文预训练
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec25/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第25章 多模态预训练的并入
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec26/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第26章 Llama 3 训练配方
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec27/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第27章 DeepSeek-V3 代表案例
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec28/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第28章 Qwen3 与多语言开源模型
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec29/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第29章 推理模型的反向影响
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec30/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第30章 2026 之后的关键问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec31/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    结语
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    附录
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            附录
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../full-book/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    完整书稿
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../outline/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    章节大纲
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plan/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    写作计划
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    研究材料
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            研究材料
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide01/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 01
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide02/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 02
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide03/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 03
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide04/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 04
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide05/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 05
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide06/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 06
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide07/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 07
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide08/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 08
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#191-数据并行张量并行流水线并行的组合" class="md-nav__link">
+    <span class="md-ellipsis">
+      19.1 数据并行、张量并行、流水线并行的组合
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="19.1 数据并行、张量并行、流水线并行的组合">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#3d-并行的概念" class="md-nav__link">
+    <span class="md-ellipsis">
+      3D 并行的概念
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gpu-三维网格的组织方式" class="md-nav__link">
+    <span class="md-ellipsis">
+      GPU 三维网格的组织方式
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#并行维度的选择策略" class="md-nav__link">
+    <span class="md-ellipsis">
+      并行维度的选择策略
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#192-megatron-lm-与-deepspeed-的系统化贡献" class="md-nav__link">
+    <span class="md-ellipsis">
+      19.2 Megatron-LM 与 DeepSpeed 的系统化贡献
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="19.2 Megatron-LM 与 DeepSpeed 的系统化贡献">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#megatron-lm-的-tp-工程化" class="md-nav__link">
+    <span class="md-ellipsis">
+      Megatron-LM 的 TP 工程化
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deepspeed-zero-的-dp-优化" class="md-nav__link">
+    <span class="md-ellipsis">
+      DeepSpeed ZeRO 的 DP 优化
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#两大框架的互补融合" class="md-nav__link">
+    <span class="md-ellipsis">
+      两大框架的互补融合
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#193-checkpoint激活重计算与显存优化" class="md-nav__link">
+    <span class="md-ellipsis">
+      19.3 Checkpoint、激活重计算与显存优化
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="19.3 Checkpoint、激活重计算与显存优化">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#激活重计算用计算换显存" class="md-nav__link">
+    <span class="md-ellipsis">
+      激活重计算：用计算换显存
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#选择性重计算策略" class="md-nav__link">
+    <span class="md-ellipsis">
+      选择性重计算策略
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#显存优化的综合效果" class="md-nav__link">
+    <span class="md-ellipsis">
+      显存优化的综合效果
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#194-通信拓扑带宽和训练效率" class="md-nav__link">
+    <span class="md-ellipsis">
+      19.4 通信拓扑、带宽和训练效率
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="19.4 通信拓扑、带宽和训练效率">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nvlink-与-infiniband-的带宽鸿沟" class="md-nav__link">
+    <span class="md-ellipsis">
+      NVLink 与 InfiniBand 的带宽鸿沟
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#通信-计算重叠" class="md-nav__link">
+    <span class="md-ellipsis">
+      通信-计算重叠
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mfu训练效率的核心指标" class="md-nav__link">
+    <span class="md-ellipsis">
+      MFU：训练效率的核心指标
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#195-从能训练走向高效稳定地训练" class="md-nav__link">
+    <span class="md-ellipsis">
+      19.5 从&rdquo;能训练&rdquo;走向&rdquo;高效稳定地训练&rdquo;
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="19.5 从”能训练”走向”高效稳定地训练”">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#千卡训练的稳定性挑战" class="md-nav__link">
+    <span class="md-ellipsis">
+      千卡训练的稳定性挑战
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#三级容错策略" class="md-nav__link">
+    <span class="md-ellipsis">
+      三级容错策略
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deepseek-v3-的工程案例" class="md-nav__link">
+    <span class="md-ellipsis">
+      DeepSeek-V3 的工程案例
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#从能跑到跑得省" class="md-nav__link">
+    <span class="md-ellipsis">
+      从&rdquo;能跑&rdquo;到&rdquo;跑得省&rdquo;
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="第19章-2021-20233d-并行与千卡训练">第19章 2021-2023：3D 并行与千卡训练<a class="headerlink" href="#第19章-2021-20233d-并行与千卡训练" title="Permanent link">&para;</a></h1>
+<p>第18章梳理了数据并行、张量并行、流水线并行三条独立路线。2021年起，这三条路线开始融合。单一并行策略已无法满足千亿参数模型的训练需求。工程社区将三种并行方式组合为三维网格，形成了3D并行（3D Parallelism）这一标准范式。[<sup>201</sup>][<sup>304</sup>]</p>
+<h2 id="191-数据并行张量并行流水线并行的组合">19.1 数据并行、张量并行、流水线并行的组合<a class="headerlink" href="#191-数据并行张量并行流水线并行的组合" title="Permanent link">&para;</a></h2>
+<h3 id="3d-并行的概念">3D 并行的概念<a class="headerlink" href="#3d-并行的概念" title="Permanent link">&para;</a></h3>
+<p>3D并行的核心思想是将GPU集群组织为一个三维笛卡尔积网格：数据并行（DP）× 张量并行（TP）× 流水线并行（PP）。总GPU数量 = DP × TP × PP。每种并行维度承担不同的职责。[<sup>201</sup>]</p>
+<p>张量并行负责拆分单层内的矩阵计算。它利用NVLink的高带宽在节点内部通信，将Attention和MLP的权重张量切分到多个GPU上。TP度通常不超过8，即一个DGX节点内的GPU数量。超过这个范围，跨NVLink域的延迟会急剧上升。[<sup>201</sup>]</p>
+<p>流水线并行负责将模型的不同层分配到不同的GPU stage。数据以micro-batch的形式依次流过各stage，形成流水线。1F1B（One-Forward-One-Backward）调度策略让空闲时间（bubble）控制在可接受范围内。PP的度决定了每个stage包含的层数。[<sup>201</sup>]</p>
+<p>数据并行负责在TP×PP组之外复制完整的模型组。每个DP组处理不同的数据批次，通过梯度同步来更新参数。DP的度直接决定了全局batch size。[<sup>200</sup>]</p>
+<p>三种并行维度的组合不是简单相加，而是存在复杂的交互效应。TP和PP共同决定了单张GPU上的参数量：TP切分单层权重，PP切分层集合。DP则在TP×PP组之外复制完整的模型副本。三者共同构成了一个层次分明的并行体系。</p>
+<h3 id="gpu-三维网格的组织方式">GPU 三维网格的组织方式<a class="headerlink" href="#gpu-三维网格的组织方式" title="Permanent link">&para;</a></h3>
+<p>下图展示了一个典型3D并行的GPU组织结构。假设总GPU数为64，配置为TP=4, PP=4, DP=4：</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>                    ┌─────────────────────────────────────────────┐
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>                    │           3D 并行 GPU 网格架构                 │
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>                    │          (TP=4 × PP=4 × DP=4 = 64 GPU)       │
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>                    └─────────────────────────────────────────────┘
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  DP Group 0 (数据并行组 0)          DP Group 1          DP Group 2          DP Group 3
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  ┌─────────────────────────┐      ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  │  PP Stage 0  PP Stage 1 │      │ 同左结构     │     │ 同左结构     │     │ 同左结构     │
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  │  PP Stage 2  PP Stage 3 │      │ (复制)      │     │ (复制)      │     │ (复制)      │
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>  │  ┌────┐      ┌────┐     │      │             │     │             │     │             │
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>  │  │GPU0│─────→│GPU4│     │      │  +16 GPU    │     │  +32 GPU    │     │  +48 GPU    │
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>  │  │GPU1│ TP   │GPU5│     │      │             │     │             │     │             │
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>  │  │GPU2│      │GPU6│     │      │             │     │             │     │             │
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>  │  │GPU3│      │GPU7│     │      │             │     │             │     │             │
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>  │  └────┘      └────┘     │      │             │     │             │     │             │
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>  │    ↑           ↑        │      │             │     │             │     │             │
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>  │  ┌────┐      ┌────┐     │      │             │     │             │     │             │
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>  │  │GPU8│─────→│GPU12│    │      │             │     │             │     │             │
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>  │  │GPU9│ TP   │GPU13│    │      │             │     │             │     │             │
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>  │  │GPU10│     │GPU14│    │      │             │     │             │     │             │
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>  │  │GPU11│     │GPU15│    │      │             │     │             │     │             │
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>  │  └────┘      └────┘     │      └─────────────┘     └─────────────┘     └─────────────┘
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>  └─────────────────────────┘
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>       ↑ NVLink (TP通信)        → IB/Ethernet (PP通信)      ⟳ IB (DP梯度同步)
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>       带宽: 400-900 GB/s        带宽: 50 GB/s               带宽: 50 GB/s
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>       延迟: 微秒级              延迟: 毫秒级                延迟: 毫秒级
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>  通信层级:
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>  ┌─────────┐    ┌─────────┐    ┌─────────┐
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>  │  TP通信  │───→│  PP通信  │───→│  DP通信  │
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>  │ All-reduce│    │ P2P发送  │    │ All-reduce│
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>  │  节点内   │    │  跨节点  │    │  跨节点  │
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>  │ 最高带宽  │    │ 中等带宽 │    │ 中等带宽 │
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>  └─────────┘    └─────────┘    └─────────┘
+</span></code></pre></div>
+<p>上图中的三条通信路径对应不同的硬件拓扑。TP通信使用节点内NVLink，带宽最高、延迟最低；PP通信使用跨节点RDMA网络，传递激活值；DP通信使用跨节点网络同步梯度。三者层次分明，互不干扰。[<sup>201</sup>][<sup>280</sup>]</p>
+<h3 id="并行维度的选择策略">并行维度的选择策略<a class="headerlink" href="#并行维度的选择策略" title="Permanent link">&para;</a></h3>
+<p>选择TP、PP、DP的具体数值需要综合考虑模型规模和集群拓扑。以下表格给出2021-2023年间不同规模模型的典型3D并行配置：</p>
+<table>
+<thead>
+<tr>
+<th>模型规模</th>
+<th>总参数量</th>
+<th>GPU总数</th>
+<th>TP</th>
+<th>PP</th>
+<th>DP</th>
+<th>每卡参数量</th>
+<th>全局Batch Size</th>
+<th>典型硬件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPT-3 (175B)</td>
+<td>175B</td>
+<td>1,024</td>
+<td>8</td>
+<td>16</td>
+<td>8</td>
+<td>~2.7B</td>
+<td>1,536</td>
+<td>A100×128节点</td>
+</tr>
+<tr>
+<td>PaLM (540B)</td>
+<td>540B</td>
+<td>6,144</td>
+<td>8</td>
+<td>24</td>
+<td>32</td>
+<td>~4.5B</td>
+<td>2,048</td>
+<td>TPUv4×1,536芯片</td>
+</tr>
+<tr>
+<td>BLOOM (176B)</td>
+<td>176B</td>
+<td>384</td>
+<td>8</td>
+<td>12</td>
+<td>4</td>
+<td>~9.2B</td>
+<td>2,048</td>
+<td>A100×48节点</td>
+</tr>
+<tr>
+<td>OPT-175B</td>
+<td>175B</td>
+<td>992</td>
+<td>8</td>
+<td>16</td>
+<td>~8</td>
+<td>~2.7B</td>
+<td>~1,000</td>
+<td>A100×124节点</td>
+</tr>
+<tr>
+<td>LLaMA-2 (70B)</td>
+<td>70B</td>
+<td>512</td>
+<td>8</td>
+<td>8</td>
+<td>8</td>
+<td>~2.7B</td>
+<td>4,096</td>
+<td>A100×64节点</td>
+</tr>
+</tbody>
+</table>
+<p>[<sup>201</sup>][<sup>200</sup>]</p>
+<p>这张表格揭示了一个关键规律：TP度几乎固定为8。原因很直接——TP需要NVLink级别的带宽，而一个DGX节点恰好有8张GPU通过NVLink全连接。PP度和DP度则根据模型深度和全局batch size灵活调整。模型越深（层数越多），PP度越大，每个stage负责的层数越少。全局batch size越大，DP度越高，每个DP组处理的数据量越小。</p>
+<p>值得注意的是，DP度与全局batch size直接挂钩。以GPT-3为例，TP=8, PP=16意味着一个TP×PP组需要128张GPU。1,024张GPU可以构成8个DP组。每个DP组的micro-batch size为4，全局batch size即为8×4×48（序列并行度）= 1,536。这种组合使模型状态在每张卡上压缩到可承受范围。[<sup>201</sup>]</p>
+<p>PP度的选择还直接影响流水线的bubble大小。1F1B调度的bubble比例约为(P-1)/(m+P-1)，其中P是PP stage数，m是micro-batch数。PP=16, m=64时bubble约19%；PP=16, m=16时bubble升至48%。这意味着增加micro-batch数可以有效减少空闲时间，但代价是更多的激活值显存占用。工程上需要在bubble大小和显存容量之间寻找平衡点。[<sup>201</sup>]</p>
+<h2 id="192-megatron-lm-与-deepspeed-的系统化贡献">19.2 Megatron-LM 与 DeepSpeed 的系统化贡献<a class="headerlink" href="#192-megatron-lm-与-deepspeed-的系统化贡献" title="Permanent link">&para;</a></h2>
+<h3 id="megatron-lm-的-tp-工程化">Megatron-LM 的 TP 工程化<a class="headerlink" href="#megatron-lm-的-tp-工程化" title="Permanent link">&para;</a></h3>
+<p>Megatron-LM（NVIDIA，2019-2021）的核心工程成就是将张量并行从理论变为可扩展的生产实践。它通过列并行+行并行的配对策略，将每个Transformer层的通信量压缩到最低：前向传播仅需1次all-reduce，反向传播也仅需1次all-reduce。[<sup>207</sup>]</p>
+<p>在千亿参数规模的训练中，这一优化的效果极为显著。一个GPT-3规模的模型每层包含约1.7B参数的两个矩阵乘法。如果不做列-行配对，朴素层内并行的通信量会高出数倍。Megatron-LM的策略让TP通信几乎被计算掩盖，节点内NVLink的充足带宽使得TP开销降至训练时间的5%以下。[<sup>201</sup>]</p>
+<p>Megatron-LM的代码实现同样具有深远影响。它提供了一套经过验证的Transformer并行模板，后续的GPT、LLaMA、PaLM等模型实现大多基于这一代码库演进。列并行和行并行的抽象接口使得不同规模的模型可以复用同一套并行逻辑，降低了工程团队的开发成本。</p>
+<h3 id="deepspeed-zero-的-dp-优化">DeepSpeed ZeRO 的 DP 优化<a class="headerlink" href="#deepspeed-zero-的-dp-优化" title="Permanent link">&para;</a></h3>
+<p>DeepSpeed（Microsoft，2020-2021）从另一个方向切入——消除数据并行中的显存冗余。ZeRO系列的三级分片策略（ZeRO-&frac12;/3）将优化器状态、梯度和参数依次分片到不同DP rank上，实现了显存占用的线性下降。[<sup>200</sup>]</p>
+<p>ZeRO-1将优化器状态分片，8卡DP下优化器显存从12N降至1.5N。ZeRO-2追加梯度分片，梯度显存从2N降至0.25N。ZeRO-3将参数本身也分片，实现O(N/DP_degree)的显存缩放。对于一个175B参数的模型，ZeRO-3在8卡DP下将模型状态显存从约2.8TB降至约350GB。[<sup>200</sup>]</p>
+<h3 id="两大框架的互补融合">两大框架的互补融合<a class="headerlink" href="#两大框架的互补融合" title="Permanent link">&para;</a></h3>
+<p>Megatron-LM解决的是&rdquo;单层太大放不进一张卡&rdquo;的问题，DeepSpeed解决的是&rdquo;模型状态冗余浪费显存&rdquo;的问题。两者天然互补。</p>
+<p>2021年，社区形成了Megatron-DeepSpeed fork这一组合方案：Megatron提供TP和PP的模型切分与通信优化，DeepSpeed提供ZeRO-based DP。这个组合成为GPT-3规模训练的事实标准。[<sup>201</sup>]</p>
+<p>两者的分工清晰。Megatron处理与模型结构紧耦合的并行——TP的列-行配对需要精确了解Attention和MLP的矩阵维度；PP的stage划分需要按层边界切分。DeepSpeed处理与模型结构无关的并行——ZeRO DP对任何模型都适用，无需修改模型代码。[<sup>201</sup>][<sup>200</sup>]</p>
+<p>这种融合的核心价值在于：工程团队可以根据模型特性选择最优并行组合，而不必在两种哲学之间二选一。175B到540B参数范围的模型训练，几乎都基于这一组合方案。</p>
+<p>从工程实践看，Megatron-DeepSpeed fork的优势体现在三个层面。第一，开发者可以逐层调试并行策略——先确定TP度（通常固定为8），再调整PP度匹配模型深度，最后用DP度消化剩余的GPU资源。第二，两个框架的通信优化互补：Megatron的TP all-reduce针对NVLink优化，DeepSpeed的DP梯度同步针对RDMA网络优化。第三，社区生态的协同——Megatron提供模型实现模板（GPT、BERT、T5），DeepSpeed提供训练基础设施（混合精度、学习率调度、checkpoint管理），降低了从零搭建训练系统的门槛。[<sup>201</sup>][<sup>200</sup>]</p>
+<h2 id="193-checkpoint激活重计算与显存优化">19.3 Checkpoint、激活重计算与显存优化<a class="headerlink" href="#193-checkpoint激活重计算与显存优化" title="Permanent link">&para;</a></h2>
+<h3 id="激活重计算用计算换显存">激活重计算：用计算换显存<a class="headerlink" href="#激活重计算用计算换显存" title="Permanent link">&para;</a></h3>
+<p>激活值（Activation）是大模型训练中最大的显存消耗来源之一。对于GPT-3规模的模型，序列长度2,048、batch size 4的情况下，一层Transformer的激活值可达数十GB。显存容量成为比计算能力更硬的约束。[<sup>200</sup>]</p>
+<p>激活重计算（Activation Checkpointing，也称Gradient Checkpointing）的核心策略是不保存中间激活值，而是在反向传播时重新计算。具体来说，前向传播只在某些checkpoint边界保存输入，中间的激活值全部丢弃。反向传播需要这些中间值时，从最近的checkpoint重新执行前向计算。[<sup>200</sup>]</p>
+<p>这一策略的代价是增加约20-30%的前向计算FLOPs，但显存节省极为可观。对于N层Transformer，如果每k层设置一个checkpoint，显存占用从O(N)降至O(N/k)。典型的配置是每1层或每2层checkpoint一次，显存节省2-10倍，计算开销增加约33%。[<sup>200</sup>]</p>
+<h3 id="选择性重计算策略">选择性重计算策略<a class="headerlink" href="#选择性重计算策略" title="Permanent link">&para;</a></h3>
+<p>并非所有操作都需要重计算。2022年的工程实践形成了精细化的选择性重计算策略：</p>
+<p><strong>必须重计算的层</strong>：Transformer层中的self-attention和MLP块。这些层的激活值最大，重计算的性价比最高。</p>
+<p><strong>可选重计算的层</strong>：Embedding层和最后的输出投影层。这些层的参数量大但激活值相对较小。</p>
+<p><strong>不重计算的层</strong>：LayerNorm、Dropout等非参数层。这些操作计算简单，重计算收益有限。</p>
+<p>Megatron-LM实现了分块重计算（selective activation recomputation），允许用户精确指定哪些Transformer层需要重计算。DeepSpeed则提供了统一的<code>checkpoint_activations</code>开关，自动管理checkpoint边界。[<sup>201</sup>][<sup>200</sup>]</p>
+<p>checkpoint间隔的选择是显存与速度之间的精确权衡。间隔为1（每层都checkpoint）时显存最小但计算开销最大；间隔为模型总层数（即不checkpoint）时显存最大但速度最快。实际训练中，通常选择间隔为1或2——对于96层的模型，每2层checkpoint一次可以将激活值显存降低近50%，而速度损失仅约10-15%。这种性价比使得激活重计算成为千卡训练的标准配置。[<sup>200</sup>]</p>
+<h3 id="显存优化的综合效果">显存优化的综合效果<a class="headerlink" href="#显存优化的综合效果" title="Permanent link">&para;</a></h3>
+<p>3D并行 + ZeRO + 激活重计算的组合，将单卡可训练的模型规模提升了一个数量级。以GPT-3 175B模型为例：</p>
+<ul>
+<li>原始显存需求（FP32，无优化）：约700GB模型参数 + 2,100GB优化器状态 = 2.8TB</li>
+<li>3D并行（TP=8, PP=16, DP=8）+ ZeRO-1：每卡显存降至约50GB</li>
+<li>追加激活重计算：每卡显存进一步降至约30-40GB</li>
+<li>最终可在A100 80GB GPU上稳定运行，单卡留有充足余量[<sup>201</sup>][<sup>200</sup>]</li>
+</ul>
+<p>这套技术栈使得千卡级训练成为可能。从单卡1B参数的限制，扩展到千卡集群训练1T参数级别的模型，显存优化技术提供了关键的使能能力。</p>
+<h2 id="194-通信拓扑带宽和训练效率">19.4 通信拓扑、带宽和训练效率<a class="headerlink" href="#194-通信拓扑带宽和训练效率" title="Permanent link">&para;</a></h2>
+<h3 id="nvlink-与-infiniband-的带宽鸿沟">NVLink 与 InfiniBand 的带宽鸿沟<a class="headerlink" href="#nvlink-与-infiniband-的带宽鸿沟" title="Permanent link">&para;</a></h3>
+<p>3D并行的效率严重依赖硬件拓扑的匹配。节点内和节点间的通信带宽存在数量级差异：</p>
+<table>
+<thead>
+<tr>
+<th>通信路径</th>
+<th>技术</th>
+<th>带宽</th>
+<th>延迟</th>
+<th>用途</th>
+<th>瓶颈程度</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>节点内GPU间</td>
+<td>NVLink (A100)</td>
+<td>600 GB/s</td>
+<td>~1 μs</td>
+<td>TP all-reduce</td>
+<td>低</td>
+</tr>
+<tr>
+<td>节点内GPU间</td>
+<td>NVLink (H100)</td>
+<td>900 GB/s</td>
+<td>~1 μs</td>
+<td>TP all-reduce</td>
+<td>极低</td>
+</tr>
+<tr>
+<td>节点内GPU间</td>
+<td>NVLink (H800)</td>
+<td>400 GB/s</td>
+<td>~1 μs</td>
+<td>TP all-reduce</td>
+<td>低</td>
+</tr>
+<tr>
+<td>跨节点</td>
+<td>InfiniBand HDR</td>
+<td>200 Gbps (25 GB/s)</td>
+<td>~5-10 μs</td>
+<td>PP/DP通信</td>
+<td>中</td>
+</tr>
+<tr>
+<td>跨节点</td>
+<td>InfiniBand NDR</td>
+<td>400 Gbps (50 GB/s)</td>
+<td>~3-5 μs</td>
+<td>PP/DP通信</td>
+<td>中</td>
+</tr>
+<tr>
+<td>跨机架</td>
+<td>Ethernet 100G</td>
+<td>12.5 GB/s</td>
+<td>~50 μs</td>
+<td>数据加载</td>
+<td>高</td>
+</tr>
+</tbody>
+</table>
+<p>[<sup>280</sup>][<sup>338</sup>][<sup>323</sup>]</p>
+<p>这张表格揭示了一个关键事实：节点内NVLink带宽是跨节点IB带宽的10-20倍。这意味着TP通信必须被严格限制在节点内部。任何跨节点的TP通信都会导致训练速度断崖式下跌。</p>
+<p>H800的NVLink带宽（400 GB/s）仅为H100（900 GB/s）的44%。这是出口管制版本的直接后果。对于依赖TP的模型，H800需要更精细的通信优化来弥补带宽差距。DeepSeek-V3选择完全规避TP，转而通过PP=16和EP=64的组合来切分模型，正是基于这一硬件约束做出的工程决策。[<sup>323</sup>]</p>
+<h3 id="通信-计算重叠">通信-计算重叠<a class="headerlink" href="#通信-计算重叠" title="Permanent link">&para;</a></h3>
+<p>隐藏通信延迟的核心技术是通信-计算重叠（Communication-Computation Overlap）。在GPU执行当前计算的同时，后台进行通信操作，使得通信时间被计算时间掩盖。</p>
+<p>DeepSpeed的<code>overlap_comm</code>选项在梯度计算的同时启动梯度all-reduce。Megatron-LM的PP实现则在当前micro-batch计算的同时，传递上一个micro-batch的激活值。两者的重叠机制不同，但目标一致：让通信尽量隐藏在计算的&rdquo;阴影&rdquo;中。[<sup>200</sup>][<sup>201</sup>]</p>
+<p>重叠的效果受限于两个因素。第一，计算密度。如果模型的计算量太小（如小batch size或短序列），计算时间不足以覆盖通信延迟，重叠效果大打折扣。第二，通信调度粒度。过于粗粒度的通信调度会阻塞计算流水线，细粒度调度则增加系统开销。</p>
+<p>2022年的工程进展使得重叠效率显著提升。DeepSpeed的<code>contiguous_gradients</code>选项将梯度聚合为连续内存块，减少了all-reduce的启动开销。Megatron-LM的interleaved pipeline（虚拟流水线）将每个物理stage切分为多个虚拟stage，增加了可重叠的计算窗口。这些优化叠加后，通信开销在总训练时间中的占比从早期的30-40%降至10-15%。[<sup>200</sup>][<sup>201</sup>]</p>
+<h3 id="mfu训练效率的核心指标">MFU：训练效率的核心指标<a class="headerlink" href="#mfu训练效率的核心指标" title="Permanent link">&para;</a></h3>
+<p>Model FLOPs Utilization（MFU，模型浮点运算利用率）成为衡量大规模训练效率的标准指标。MFU = 实际训练吞吐 / 理论峰值FLOPs。它综合反映了并行效率、通信开销、气泡时间、内存带宽瓶颈等所有因素的影响。[<sup>323</sup>][<sup>338</sup>]</p>
+<p>2021-2023年的典型MFU数据：</p>
+<ul>
+<li>GPT-3（175B，1,024 A100）：MFU约15-20%</li>
+<li>PaLM（540B，6,144 TPUv4）：MFU约30%</li>
+<li>LLaMA-2 70B（512 A100）：MFU约25-30%</li>
+<li>DeepSeek-V3（671B MoE，2,048 H800）：MFU约34.7%[<sup>323</sup>][<sup>338</sup>]</li>
+</ul>
+<p>MFU的提升来自三个方面：更高效的流水线调度（减少bubble）、更好的通信-计算重叠、以及更精细的显存管理（允许更大的micro-batch从而提高计算密度）。DeepSeek-V3的34.7% MFU代表了2024年初的行业最高水平，比LLaMA 3.1 70B的25.2%高出近10个百分点。[<sup>323</sup>]</p>
+<p>MFU指标的引入改变了行业的话语体系。在此之前，训练效率常被粗略描述为&rdquo;XX天训练完成&rdquo;。但训练天数取决于模型规模、数据量、GPU数量和单卡性能，是一个综合结果，无法横向比较。MFU将效率归一化为理论峰值的百分比，使得不同模型、不同集群、不同框架之间的比较成为可能。一个模型的MFU从25%提升到35%，意味着在相同硬件上训练相同规模的模型可以节省近30%的时间和成本。</p>
+<h2 id="195-从能训练走向高效稳定地训练">19.5 从&rdquo;能训练&rdquo;走向&rdquo;高效稳定地训练&rdquo;<a class="headerlink" href="#195-从能训练走向高效稳定地训练" title="Permanent link">&para;</a></h2>
+<h3 id="千卡训练的稳定性挑战">千卡训练的稳定性挑战<a class="headerlink" href="#千卡训练的稳定性挑战" title="Permanent link">&para;</a></h3>
+<p>千卡集群的日常故障率远超直觉。2,000张GPU中，平均每天有数张卡出现硬件故障、内存错误（ECC error）或网络抖动。在一个持续数月的训练任务中，完全无故障的概率接近于零。</p>
+<p>训练层面的稳定性问题同样严峻。Loss spike（损失值突然跳升数十倍）是常见问题，触发原因包括异常数据批次、梯度爆炸、数值精度溢出。NaN（Not a Number）可能在任何时刻出现，一旦发生，如果不及时回滚， corrupted的梯度会通过优化器状态（momentum buffer）污染后续数百步的训练。[<sup>283</sup>]</p>
+<p>梯度裁剪（Gradient Clipping）是标准防护手段。Global norm clipping将梯度范数限制在阈值（通常1.0）以内，超出部分等比缩放。它不改变梯度方向，只限制步长。对于大模型训练，梯度裁剪是&rdquo;电路断路器&rdquo;——防止单次灾难性更新，但不能替代学习率调度。[<sup>283</sup>][<sup>284</sup>]</p>
+<p>除了梯度裁剪，混合精度训练（FP16/BF16）本身也引入了数值稳定性风险。FP16的动态范围极小（5.96×10⁻⁸ 至 65,504），容易出现梯度下溢（underflow）。BF16牺牲了部分精度来换取更大的动态范围，成为2021年后的主流选择。到2023年，FP8训练开始实验性使用，其动态范围比FP16更窄，稳定性挑战更大——DeepSeek-V3的FP8稳定训练因此格外值得关注。[<sup>283</sup>][<sup>327</sup>]</p>
+<h3 id="三级容错策略">三级容错策略<a class="headerlink" href="#三级容错策略" title="Permanent link">&para;</a></h3>
+<p>工程实践形成了分级容错机制：</p>
+<p><strong>第一级：Checkpoint + 自动恢复</strong>。每固定步数（通常100-1,000步）保存模型参数和优化器状态的全量checkpoint。当检测到NaN或loss发散时，自动回滚到最近的健康checkpoint，跳过触发故障的数据批次，继续训练。</p>
+<p><strong>第二级：动态学习率调整</strong>。对于中等规模的loss spike（2-5倍正常值），降低学习率10-20%继续训练500步，通常可以自动恢复。关键教训是：回滚时必须同时恢复模型参数和优化器状态。只回滚参数会导致corrupted的momentum buffer在下一步再次引发不稳定。[<sup>283</sup>]</p>
+<p><strong>第三级：人工诊断</strong>。对于反复出现的故障模式，需要人工分析日志、检查数据、调整超参数或更换故障硬件。</p>
+<h3 id="deepseek-v3-的工程案例">DeepSeek-V3 的工程案例<a class="headerlink" href="#deepseek-v3-的工程案例" title="Permanent link">&para;</a></h3>
+<p>DeepSeek-V3的训练配置集中体现了2024年千卡训练的最佳实践。[<sup>323</sup>][<sup>326</sup>][<sup>338</sup>]</p>
+<p><strong>集群配置</strong>：2,048张NVIDIA H800 GPU，每节点8卡，NVLink+NVSwitch节点内互联，跨节点InfiniBand NDR互联。H800的NVLink带宽为400 GB/s（H100的44%），这对TP通信构成额外挑战。[<sup>323</sup>]</p>
+<p><strong>并行策略选择</strong>：PP=16（流水线并行度），EP=64（专家并行度，MoE特有），DP使用ZeRO-1。值得注意的是，DeepSeek-V3<strong>不使用张量并行</strong>——通过精细的显存管理和MoE架构设计，完全避免了TP通信，规避了H800 NVLink带宽不足的瓶颈。[<sup>326</sup>]</p>
+<p><strong>训练效率</strong>：预训练14.8T tokens，耗时54天（2,664K GPU小时），每万亿token仅需约180K GPU小时（约3.7天）。MFU达到34.7%，比LLaMA 3.1 70B的25.2%高出约38%。[<sup>323</sup>][<sup>338</sup>]</p>
+<p><strong>稳定性表现</strong>：在整个14.8T tokens的预训练过程中，没有遇到任何不可恢复的loss spike，无需rollback。这一数据点打破了&rdquo;FP8训练必然不稳定&rdquo;的成见——DeepSeek-V3大量使用了FP8精度，但通过细粒度量化和选择性精度回退，实现了生产级的训练稳定性。[<sup>327</sup>]</p>
+<h3 id="从能跑到跑得省">从&rdquo;能跑&rdquo;到&rdquo;跑得省&rdquo;<a class="headerlink" href="#从能跑到跑得省" title="Permanent link">&para;</a></h3>
+<p>3D并行技术的成熟标志着大模型训练从&rdquo;能不能训练&rdquo;转向&rdquo;多快好省地训练&rdquo;。2021年之前，训练一个百亿参数模型是技术突破；2023年之后，训练效率（MFU）、训练成本（每百万token的GPU小时数）、训练稳定性（故障恢复时间）成为竞争焦点。</p>
+<p>这一转变的深层含义是：大模型训练从科研探索变成了工业工程。硬件选型、集群拓扑、并行策略、容错机制、监控告警，每一个环节的优化都会直接转化为成本节约和时间压缩。千卡训练的成功不再依赖单一技术的突破，而是系统工程的精益求精。</p>
+<p>从更长的技术演进脉络看，3D并行时代（2021-2023）为后续的长上下文训练和MoE训练奠定了工程基础。第20章将讨论，长上下文训练需要在3D并行之上增加序列并行维度，形成4D甚至5D并行。MoE训练则引入了专家并行（EP）和all-to-all通信，进一步丰富了并行策略的组合空间。没有3D并行阶段积累的工程经验，这些扩展都将无从谈起。[<sup>323</sup>][<sup>304</sup>][<sup>261</sup>]</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.select", "content.tooltips"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.60a45f97.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  <script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(() => { lightbox.reload() });
+</script></body>
+</html>

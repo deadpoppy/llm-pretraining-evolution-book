@@ -1,0 +1,2838 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="从 Scaling Law 到数据配方与分布式训练">
+      
+      
+      
+        <link rel="canonical" href="https://deadpoppy.github.io/llm-pretraining-evolution-book/research/llm_pretraining_wide03/">
+      
+      
+        <link rel="prev" href="../llm_pretraining_wide02/">
+      
+      
+        <link rel="next" href="../llm_pretraining_wide04/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.50">
+    
+    
+      
+        <title>Wide 03 - 大语言模型预训练技术演进</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.a40c8224.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+SC:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Noto Sans SC";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/book.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+   <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
+    html.glightbox-open { overflow: initial; height: 100%; }
+    .gslide-title { margin-top: 0px; user-select: text; }
+    .gslide-desc { color: #666; user-select: text; }
+    .gslide-image img { background: white; }
+    .gscrollbar-fixer { padding-right: 15px; }
+    .gdesc-inner { font-size: 0.75rem; }
+    body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
+    body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
+    body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}</style> <script src="../../assets/javascripts/glightbox.min.js"></script></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tokenizer技术演进深度研究报告" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="大语言模型预训练技术演进" class="md-header__button md-logo" aria-label="大语言模型预训练技术演进" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            大语言模型预训练技术演进
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Wide 03
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="teal"  aria-label="切换到深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="teal"  aria-label="切换到浅色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/deadpoppy/llm-pretraining-evolution-book" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    deadpoppy/llm-pretraining-evolution-book
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../chapters/llm_pretraining_sec00/" class="md-tabs__link">
+          
+  
+    
+  
+  正文
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../full-book/" class="md-tabs__link">
+          
+  
+    
+  
+  附录
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../llm_pretraining_wide01/" class="md-tabs__link">
+          
+  
+    
+  
+  研究材料
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="大语言模型预训练技术演进" class="md-nav__button md-logo" aria-label="大语言模型预训练技术演进" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    大语言模型预训练技术演进
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/deadpoppy/llm-pretraining-evolution-book" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    deadpoppy/llm-pretraining-evolution-book
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    首页
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    正文
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            正文
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec00/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    导读
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec01/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第1章 预训练的前史
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec02/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第2章 Transformer 改变底层结构
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec03/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第3章 GPT 路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec04/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第4章 BERT 路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec05/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第5章 T5、BART 与统一文本到文本
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec06/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第6章 Tokenizer 的核心问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec07/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第7章 BPE 到 Byte-level Tokenizer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec08/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第8章 Tokenizer 的新问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec09/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第9章 Scaling Law 的提出
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec10/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第10章 GPT-3 与大模型涌现
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec11/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第11章 Chinchilla Scaling Law
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec12/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第12章 Scaling Law 的新阶段
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec13/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第13章 预训练数据的基本构成
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec14/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第14章 大规模语料堆叠阶段
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec15/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第15章 数据配比成为核心技术
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec16/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第16章 数据配比的新趋势
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec17/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第17章 分布式训练的基本矛盾
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec18/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第18章 并行训练的三大路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec19/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第19章 3D 并行与千卡训练
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec20/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第20章 长上下文与高效 Attention
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec21/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第21章 新一代训练系统趋势
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec22/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第22章 MoE 稀疏激活模型
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec23/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第23章 Multi-token Prediction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec24/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第24章 长上下文预训练
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec25/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第25章 多模态预训练的并入
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec26/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第26章 Llama 3 训练配方
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec27/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第27章 DeepSeek-V3 代表案例
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec28/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第28章 Qwen3 与多语言开源模型
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec29/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第29章 推理模型的反向影响
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec30/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第30章 2026 之后的关键问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec31/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    结语
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    附录
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            附录
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../full-book/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    完整书稿
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../outline/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    章节大纲
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plan/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    写作计划
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    研究材料
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            研究材料
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide01/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 01
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide02/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 02
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Wide 03
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Wide 03
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#一关键发现带引用" class="md-nav__link">
+    <span class="md-ellipsis">
+      一、关键发现（带引用）
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="一、关键发现（带引用）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-bpe算法的核心原理与演变" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. BPE算法的核心原理与演变
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-wordpiece与bpe的技术差异" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. WordPiece与BPE的技术差异
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-sentencepiece的语言无关设计" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. SentencePiece的语言无关设计
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-byte-level-bpe与未知字符问题" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Byte-level BPE与未知字符问题
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-gpt系列tokenizer的工程化演进" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. GPT系列Tokenizer的工程化演进
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-tokenizer对多语言模型的影响token预算不公平问题" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Tokenizer对多语言模型的影响——Token预算不公平问题
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-代码数学公式对tokenizer的特殊挑战" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. 代码、数学、公式对Tokenizer的特殊挑战
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-tokenizer-free或原生字节建模的研究进展" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Tokenizer-Free或原生字节建模的研究进展
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-词表大小对训练效率和上下文长度的影响" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. 词表大小对训练效率和上下文长度的影响
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-2024-2025-tokenizer设计的最新趋势" class="md-nav__link">
+    <span class="md-ellipsis">
+      10. 2024-2025 Tokenizer设计的最新趋势
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#二重要论文和来源" class="md-nav__link">
+    <span class="md-ellipsis">
+      二、重要论文和来源
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="二、重要论文和来源">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#经典基础论文" class="md-nav__link">
+    <span class="md-ellipsis">
+      经典基础论文
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2020-2023重要研究" class="md-nav__link">
+    <span class="md-ellipsis">
+      2020-2023重要研究
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2024-2025前沿研究" class="md-nav__link">
+    <span class="md-ellipsis">
+      2024-2025前沿研究
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#三趋势和信号" class="md-nav__link">
+    <span class="md-ellipsis">
+      三、趋势和信号
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="三、趋势和信号">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#趋势1词汇表大小持续扩张" class="md-nav__link">
+    <span class="md-ellipsis">
+      趋势1：词汇表大小持续扩张
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#趋势2从固定tokenizer向动态自适应tokenizer演进" class="md-nav__link">
+    <span class="md-ellipsis">
+      趋势2：从固定Tokenizer向动态/自适应Tokenizer演进
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#趋势3tokenizer-free架构从概念走向实用" class="md-nav__link">
+    <span class="md-ellipsis">
+      趋势3：Tokenizer-free架构从概念走向实用
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#趋势4代码和多模态对tokenizer设计提出新要求" class="md-nav__link">
+    <span class="md-ellipsis">
+      趋势4：代码和多模态对Tokenizer设计提出新要求
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#趋势5tokenizer公平性成为核心设计考量" class="md-nav__link">
+    <span class="md-ellipsis">
+      趋势5：Tokenizer公平性成为核心设计考量
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#四争议和冲突观点" class="md-nav__link">
+    <span class="md-ellipsis">
+      四、争议和冲突观点
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="四、争议和冲突观点">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#争议1bpe是否是最优选择" class="md-nav__link">
+    <span class="md-ellipsis">
+      争议1：BPE是否是最优选择？
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#争议2大词汇表vs小词汇表" class="md-nav__link">
+    <span class="md-ellipsis">
+      争议2：大词汇表vs小词汇表
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#争议3tokenizer-free架构能否取代bpe" class="md-nav__link">
+    <span class="md-ellipsis">
+      争议3：Tokenizer-free架构能否取代BPE？
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#争议4tokenization-premium是否等于性能不平等" class="md-nav__link">
+    <span class="md-ellipsis">
+      争议4：Tokenization Premium是否等于性能不平等？
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#五建议深入研究的领域" class="md-nav__link">
+    <span class="md-ellipsis">
+      五、建议深入研究的领域
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="五、建议深入研究的领域">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#第6章素材tokenizer的核心问题压缩与泛化" class="md-nav__link">
+    <span class="md-ellipsis">
+      第6章素材：Tokenizer的核心问题（压缩与泛化）
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#第7章素材bpewordpiecesentencepiece到byte-level-tokenizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      第7章素材：BPE、WordPiece、SentencePiece到Byte-level Tokenizer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#第8章素材2023-2026-tokenizer的新问题" class="md-nav__link">
+    <span class="md-ellipsis">
+      第8章素材：2023-2026 Tokenizer的新问题
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#引用索引" class="md-nav__link">
+    <span class="md-ellipsis">
+      引用索引
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide04/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 04
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide05/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 05
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide06/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 06
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide07/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 07
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide08/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 08
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#一关键发现带引用" class="md-nav__link">
+    <span class="md-ellipsis">
+      一、关键发现（带引用）
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="一、关键发现（带引用）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-bpe算法的核心原理与演变" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. BPE算法的核心原理与演变
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-wordpiece与bpe的技术差异" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. WordPiece与BPE的技术差异
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-sentencepiece的语言无关设计" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. SentencePiece的语言无关设计
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-byte-level-bpe与未知字符问题" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Byte-level BPE与未知字符问题
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-gpt系列tokenizer的工程化演进" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. GPT系列Tokenizer的工程化演进
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-tokenizer对多语言模型的影响token预算不公平问题" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Tokenizer对多语言模型的影响——Token预算不公平问题
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-代码数学公式对tokenizer的特殊挑战" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. 代码、数学、公式对Tokenizer的特殊挑战
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-tokenizer-free或原生字节建模的研究进展" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Tokenizer-Free或原生字节建模的研究进展
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-词表大小对训练效率和上下文长度的影响" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. 词表大小对训练效率和上下文长度的影响
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-2024-2025-tokenizer设计的最新趋势" class="md-nav__link">
+    <span class="md-ellipsis">
+      10. 2024-2025 Tokenizer设计的最新趋势
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#二重要论文和来源" class="md-nav__link">
+    <span class="md-ellipsis">
+      二、重要论文和来源
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="二、重要论文和来源">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#经典基础论文" class="md-nav__link">
+    <span class="md-ellipsis">
+      经典基础论文
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2020-2023重要研究" class="md-nav__link">
+    <span class="md-ellipsis">
+      2020-2023重要研究
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2024-2025前沿研究" class="md-nav__link">
+    <span class="md-ellipsis">
+      2024-2025前沿研究
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#三趋势和信号" class="md-nav__link">
+    <span class="md-ellipsis">
+      三、趋势和信号
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="三、趋势和信号">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#趋势1词汇表大小持续扩张" class="md-nav__link">
+    <span class="md-ellipsis">
+      趋势1：词汇表大小持续扩张
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#趋势2从固定tokenizer向动态自适应tokenizer演进" class="md-nav__link">
+    <span class="md-ellipsis">
+      趋势2：从固定Tokenizer向动态/自适应Tokenizer演进
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#趋势3tokenizer-free架构从概念走向实用" class="md-nav__link">
+    <span class="md-ellipsis">
+      趋势3：Tokenizer-free架构从概念走向实用
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#趋势4代码和多模态对tokenizer设计提出新要求" class="md-nav__link">
+    <span class="md-ellipsis">
+      趋势4：代码和多模态对Tokenizer设计提出新要求
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#趋势5tokenizer公平性成为核心设计考量" class="md-nav__link">
+    <span class="md-ellipsis">
+      趋势5：Tokenizer公平性成为核心设计考量
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#四争议和冲突观点" class="md-nav__link">
+    <span class="md-ellipsis">
+      四、争议和冲突观点
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="四、争议和冲突观点">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#争议1bpe是否是最优选择" class="md-nav__link">
+    <span class="md-ellipsis">
+      争议1：BPE是否是最优选择？
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#争议2大词汇表vs小词汇表" class="md-nav__link">
+    <span class="md-ellipsis">
+      争议2：大词汇表vs小词汇表
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#争议3tokenizer-free架构能否取代bpe" class="md-nav__link">
+    <span class="md-ellipsis">
+      争议3：Tokenizer-free架构能否取代BPE？
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#争议4tokenization-premium是否等于性能不平等" class="md-nav__link">
+    <span class="md-ellipsis">
+      争议4：Tokenization Premium是否等于性能不平等？
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#五建议深入研究的领域" class="md-nav__link">
+    <span class="md-ellipsis">
+      五、建议深入研究的领域
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="五、建议深入研究的领域">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#第6章素材tokenizer的核心问题压缩与泛化" class="md-nav__link">
+    <span class="md-ellipsis">
+      第6章素材：Tokenizer的核心问题（压缩与泛化）
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#第7章素材bpewordpiecesentencepiece到byte-level-tokenizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      第7章素材：BPE、WordPiece、SentencePiece到Byte-level Tokenizer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#第8章素材2023-2026-tokenizer的新问题" class="md-nav__link">
+    <span class="md-ellipsis">
+      第8章素材：2023-2026 Tokenizer的新问题
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#引用索引" class="md-nav__link">
+    <span class="md-ellipsis">
+      引用索引
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="tokenizer技术演进深度研究报告">Tokenizer技术演进深度研究报告<a class="headerlink" href="#tokenizer技术演进深度研究报告" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>研究范围</strong>：大模型预训练技术演进书籍第6-8章素材<br />
+<strong>覆盖章节</strong>：第6章 Tokenizer的核心问题（压缩与泛化）；第7章 BPE、WordPiece、SentencePiece到Byte-level Tokenizer；第8章 2023-2026 Tokenizer的新问题<br />
+<strong>搜索次数</strong>：12次独立搜索<br />
+<strong>生成日期</strong>：2025年</p>
+</blockquote>
+<hr />
+<h2 id="一关键发现带引用">一、关键发现（带引用）<a class="headerlink" href="#一关键发现带引用" title="Permanent link">&para;</a></h2>
+<h3 id="1-bpe算法的核心原理与演变">1. BPE算法的核心原理与演变<a class="headerlink" href="#1-bpe算法的核心原理与演变" title="Permanent link">&para;</a></h3>
+<p><strong>核心发现</strong>：<br />
+- <strong>BPE（Byte Pair Encoding）</strong>最初由Gage于1994年提出作为数据压缩算法，后由Sennrich等人于2016年引入NLP领域用于神经机器翻译<sup id="fnref:1^"><a class="footnote-ref" href="#fn:1^">1</a></sup>。它从一个字符级别的初始词汇表开始，迭代地合并训练语料中最频繁的相邻token对，直到达到目标词汇表大小<sup id="fnref:2^"><a class="footnote-ref" href="#fn:2^">2</a></sup>。<br />
+- BPE目前仍是大多数SOTA LLM的首选分词方法，包括GPT系列、LLaMA、DeepSeek等，原因是其内存需求远低于Unigram方法<sup id="fnref:3^"><a class="footnote-ref" href="#fn:3^">3</a></sup>。<br />
+- BPE的训练过程是确定性的——给定固定的合并列表，编码是确定性的。这种贪心启发式策略在理论上有局限，但工程上非常高效<sup id="fnref:4^"><a class="footnote-ref" href="#fn:4^">4</a></sup>。</p>
+<p><strong>关键文献</strong>：<br />
+- Sennrich et al., &ldquo;Neural Machine Translation of Rare Words with Subword Units,&rdquo; ACL 2016<sup id="fnref2:1^"><a class="footnote-ref" href="#fn:1^">1</a></sup><br />
+- Gage, &ldquo;A New Algorithm for Data Compression,&rdquo; The C Users Journal, 1994<sup id="fnref:5^"><a class="footnote-ref" href="#fn:5^">5</a></sup></p>
+<h3 id="2-wordpiece与bpe的技术差异">2. WordPiece与BPE的技术差异<a class="headerlink" href="#2-wordpiece与bpe的技术差异" title="Permanent link">&para;</a></h3>
+<p><strong>核心发现</strong>：<br />
+- <strong>WordPiece</strong>由Schuster和Nakajima于2012年开发，Google在其神经机器翻译系统和BERT中广泛采用<sup id="fnref:6^"><a class="footnote-ref" href="#fn:6^">6</a></sup>。<br />
+- <strong>关键区别</strong>：WordPiece与BPE的最大差异在于合并标准。BPE选择频率最高的相邻对进行合并，而WordPiece使用<strong>逐点互信息（Pointwise Mutual Information, PMI）</strong>作为合并标准——优先选择那些共现频率高于各自独立频率预期值的token对<sup id="fnref:7^"><a class="footnote-ref" href="#fn:7^">7</a></sup>。<br />
+- WordPiece的目标是最大化训练数据的似然，而非简单地最大化频率。这使得算法对语言的语义更敏感，可能产生更有意义的子词单元<sup id="fnref:8^"><a class="footnote-ref" href="#fn:8^">8</a></sup>。<br />
+- 在BERT的初步实验中，WordPiece相比BPE有微小的性能优势<sup id="fnref:9^"><a class="footnote-ref" href="#fn:9^">9</a></sup>。</p>
+<p><strong>关键文献</strong>：<br />
+- Schuster &amp; Nakajima, &ldquo;Japanese and Korean Voice Search,&rdquo; 2012<sup id="fnref2:6^"><a class="footnote-ref" href="#fn:6^">6</a></sup><br />
+- Wu et al., &ldquo;Google&rsquo;s Neural Machine Translation System,&rdquo; 2016<sup id="fnref:10^"><a class="footnote-ref" href="#fn:10^">10</a></sup></p>
+<h3 id="3-sentencepiece的语言无关设计">3. SentencePiece的语言无关设计<a class="headerlink" href="#3-sentencepiece的语言无关设计" title="Permanent link">&para;</a></h3>
+<p><strong>核心发现</strong>：<br />
+- <strong>SentencePiece</strong>由Kudo和Richardson于2018年在Google开发，是一个语言无关的分词工具包<sup id="fnref:11^"><a class="footnote-ref" href="#fn:11^">11</a></sup>。<br />
+- 它直接将训练语料视为原始Unicode字符序列，<strong>没有预分词步骤</strong>（即不基于空格提取单词），这使其可以应用于任何字符序列，实现了真正的语言无关性<sup id="fnref:12^"><a class="footnote-ref" href="#fn:12^">12</a></sup>。<br />
+- SentencePiece实现了两种主要算法：BPE（自底向上合并）和<strong>Unigram Language Model</strong>（自顶向下剪枝）<sup id="fnref:13^"><a class="footnote-ref" href="#fn:13^">13</a></sup>。<br />
+- Unigram方法从一个大型候选词汇表开始，迭代地剪除对语料对数似然贡献最小的token，使用Viterbi算法和EM算法计算和优化token概率<sup id="fnref:14^"><a class="footnote-ref" href="#fn:14^">14</a></sup>。<br />
+- SentencePiece提供可逆分词（reversibility），这对基于子词的语言模型至关重要<sup id="fnref:15^"><a class="footnote-ref" href="#fn:15^">15</a></sup>。</p>
+<p><strong>关键文献</strong>：<br />
+- Kudo &amp; Richardson, &ldquo;SentencePiece: A simple and language independent subword tokenizer and detokenizer for Neural Text Processing,&rdquo; EMNLP 2018<sup id="fnref2:11^"><a class="footnote-ref" href="#fn:11^">11</a></sup><br />
+- Kudo, &ldquo;Subword Regularization: Improving Neural Network Translation Models with Multiple Subword Candidates,&rdquo; ACL 2018<sup id="fnref:16^"><a class="footnote-ref" href="#fn:16^">16</a></sup></p>
+<h3 id="4-byte-level-bpe与未知字符问题">4. Byte-level BPE与未知字符问题<a class="headerlink" href="#4-byte-level-bpe与未知字符问题" title="Permanent link">&para;</a></h3>
+<p><strong>核心发现</strong>：<br />
+- GPT-2（Radford et al., 2019）引入了<strong>Byte-level BPE（BBPE）</strong>，直接在原始字节上应用BPE而非Unicode字符，使模型能够处理任何Unicode字符或二进制数据<sup id="fnref:17^"><a class="footnote-ref" href="#fn:17^">17</a></sup>。<br />
+- BBPE的核心优势是<strong>完全消除了未知字符（UNK）问题</strong>——因为任何文本都可以表示为256个字节的序列，词汇表永远不会有覆盖盲区<sup id="fnref:18^"><a class="footnote-ref" href="#fn:18^">18</a></sup>。<br />
+- GPT-2的词汇表大小为50,257（50,000个合并token + 256个字节token + 1个特殊token）<sup id="fnref:19^"><a class="footnote-ref" href="#fn:19^">19</a></sup>。<br />
+- BBPE的代价是序列长度显著增加——非拉丁文字（如中文、泰米尔文）的UTF-8编码需要2-3个字节/字符，导致这些语言的token序列更长<sup id="fnref:20^"><a class="footnote-ref" href="#fn:20^">20</a></sup>。</p>
+<p><strong>关键文献</strong>：<br />
+- Radford et al., &ldquo;Language Models are Unsupervised Multitask Learners,&rdquo; 2019 (GPT-2)<sup id="fnref2:17^"><a class="footnote-ref" href="#fn:17^">17</a></sup></p>
+<h3 id="5-gpt系列tokenizer的工程化演进">5. GPT系列Tokenizer的工程化演进<a class="headerlink" href="#5-gpt系列tokenizer的工程化演进" title="Permanent link">&para;</a></h3>
+<p><strong>核心发现</strong>：<br />
+- <strong>GPT-2</strong>：r50k_base，~50K词汇，byte-level BPE，基础正则表达式模式<sup id="fnref:21^"><a class="footnote-ref" href="#fn:21^">21</a></sup><br />
+- <strong>GPT-3/3.5</strong>：p50k_base，~50K词汇，改进的预分词模式<sup id="fnref2:21^"><a class="footnote-ref" href="#fn:21^">21</a></sup><br />
+- <strong>GPT-4</strong>：cl100k_base，~100,277词汇，重大改进的正则表达式模式，支持多语言和代码，引入FIM（Fill-in-the-Middle）特殊token<sup id="fnref:22^"><a class="footnote-ref" href="#fn:22^">22</a></sup><br />
+- <strong>GPT-4o/GPT-5</strong>：o200k_base，~200,000词汇，2024年5月发布，显著改善非拉丁语言效率<sup id="fnref:23^"><a class="footnote-ref" href="#fn:23^">23</a></sup></p>
+<p><strong>GPT-4 tokenizer的关键改进</strong><sup id="fnref2:22^"><a class="footnote-ref" href="#fn:22^">22</a></sup>：<br />
+- 大小写不敏感匹配 <code>(?i:...)</code> 处理大小写变体<br />
+- 数字仅匹配2位以上 <code>\p{N}{2,}</code>，防止超长数字序列合并为单一token<br />
+- 空白字符处理改进——GPT-4合并连续空格，而GPT-2不合并<br />
+- 特殊token扩展：<code>&lt;|fim_prefix|&gt;</code>, <code>&lt;|fim_middle|&gt;</code>, <code>&lt;|fim_suffix|&gt;</code> 支持代码补全</p>
+<p><strong>o200k_base的多语言改进</strong><sup id="fnref2:23^"><a class="footnote-ref" href="#fn:23^">23</a></sup><sup id="fnref:24^"><a class="footnote-ref" href="#fn:24^">24</a></sup>：<br />
+- 词汇表从100K翻倍至200K，非英语token数量显著减少<br />
+- 中文tokenization效率提升约1.4x，日文1.4x，韩文1.7x<br />
+- 印地语token数量减少高达79%，泰卢固语77%，泰米尔语74%<br />
+- 泰米尔文示例：同一句子从68 tokens降至21 tokens（3.2x压缩）<sup id="fnref2:24^"><a class="footnote-ref" href="#fn:24^">24</a></sup></p>
+<p><strong>关键文献</strong>：<br />
+- tiktoken library documentation, OpenAI<sup id="fnref3:22^"><a class="footnote-ref" href="#fn:22^">22</a></sup><br />
+- Various technical blogs on GPT-4o tokenization improvements<sup id="fnref3:23^"><a class="footnote-ref" href="#fn:23^">23</a></sup><sup id="fnref3:24^"><a class="footnote-ref" href="#fn:24^">24</a></sup></p>
+<h3 id="6-tokenizer对多语言模型的影响token预算不公平问题">6. Tokenizer对多语言模型的影响——Token预算不公平问题<a class="headerlink" href="#6-tokenizer对多语言模型的影响token预算不公平问题" title="Permanent link">&para;</a></h3>
+<p><strong>核心发现</strong>：<br />
+- Petrov等人（2023）的开创性论文《Language Model Tokenizers Introduce Unfairness Between Languages》量化了低资源语言用户需要支付2-15倍更多费用的问题<sup id="fnref:25^"><a class="footnote-ref" href="#fn:25^">25</a></sup>。<br />
+- <strong>&ldquo;Tokenization Premium&rdquo;</strong>指标定义：<code>premium = n_tokens(language) / n_tokens(English)</code>。Premium为1.0表示与英语平等，2.0表示需要2倍token<sup id="fnref:26^"><a class="footnote-ref" href="#fn:26^">26</a></sup>。<br />
+- 在cl100k_base中，相同句子泰米尔语需要6倍于英语的token，印地语4.6倍，中文2倍<sup id="fnref:27^"><a class="footnote-ref" href="#fn:27^">27</a></sup>。<br />
+- <strong>Byte Premium Effect</strong>：字节级BPE中，UTF-8编码的非拉丁字符需要2-3个字节，导致序列长度隐含地惩罚非拉丁文字<sup id="fnref:28^"><a class="footnote-ref" href="#fn:28^">28</a></sup>。<br />
+- 即使明确为其他语言设计的模型（如CamemBERT法语模型、GottBERT德语模型），英语仍然获得最低的premium——这反映了训练数据中英语的主导地位和tokenizer的内在偏差<sup id="fnref2:25^"><a class="footnote-ref" href="#fn:25^">25</a></sup>。<br />
+- 使用英语tokenizer处理非英语文本可导致高达68%的额外计算成本和10-15个百分点的零样本准确率下降<sup id="fnref:29^"><a class="footnote-ref" href="#fn:29^">29</a></sup>。</p>
+<p><strong>关键文献</strong>：<br />
+- Petrov et al., &ldquo;Language Model Tokenizers Introduce Unfairness Between Languages,&rdquo; arXiv:2305.15425<sup id="fnref3:25^"><a class="footnote-ref" href="#fn:25^">25</a></sup><br />
+- Ahia et al., 相关后续研究<sup id="fnref2:26^"><a class="footnote-ref" href="#fn:26^">26</a></sup></p>
+<h3 id="7-代码数学公式对tokenizer的特殊挑战">7. 代码、数学、公式对Tokenizer的特殊挑战<a class="headerlink" href="#7-代码数学公式对tokenizer的特殊挑战" title="Permanent link">&para;</a></h3>
+<p><strong>核心发现</strong>：<br />
+- <strong>代码Tokenization的语法不对齐问题</strong>：Nie等人（2025）的TokDrift研究表明，BPE基于频率统计而非语法进行分词，导致token边界与编程语言语法token边界不对齐<sup id="fnref:30^"><a class="footnote-ref" href="#fn:30^">30</a></sup>。<br />
+- 即使是微小的格式变化（如空格编辑或标识符重命名）也可能导致模型输出发生重大变化。Qwen2.5-Coder-32B-Instruct在tokenization改变时预测变化率为6.09%，在某些单条重写规则下高达60%<sup id="fnref2:30^"><a class="footnote-ref" href="#fn:30^">30</a></sup>。<br />
+- 层分析表明问题起源于早期嵌入层——子词分割未能捕获语法token边界<sup id="fnref3:30^"><a class="footnote-ref" href="#fn:30^">30</a></sup>。<br />
+- <strong>数学公式Tokenization挑战</strong>：LaTeX符号和数学表达式包含大量特殊字符（\, _, ^, {, }），标准BPE往往将其分割为无意义的子词单元。数字作为token的处理也存在问题——长数字序列可能被拆分为多个子token，影响算术能力<sup id="fnref:31^"><a class="footnote-ref" href="#fn:31^">31</a></sup>。<br />
+- 代码预处理策略（如PLBART）将<code>\n</code>、缩进替换为<code>NEW_LINE</code>、<code>INDENT</code>、<code>DEDENT</code>token，因为这些是Python语法的一部分<sup id="fnref:32^"><a class="footnote-ref" href="#fn:32^">32</a></sup>。</p>
+<p><strong>关键文献</strong>：<br />
+- Nie et al., &ldquo;TokDrift: When LLM Speaks in Subwords but Code Speaks in Grammar,&rdquo; arXiv:2510.14972<sup id="fnref4:30^"><a class="footnote-ref" href="#fn:30^">30</a></sup><br />
+- Ahmad et al., &ldquo;CodeBPE: Investigating Subtokenization Options for LLM Pretraining on Source Code,&rdquo; arXiv:2308.00683<sup id="fnref2:32^"><a class="footnote-ref" href="#fn:32^">32</a></sup></p>
+<h3 id="8-tokenizer-free或原生字节建模的研究进展">8. Tokenizer-Free或原生字节建模的研究进展<a class="headerlink" href="#8-tokenizer-free或原生字节建模的研究进展" title="Permanent link">&para;</a></h3>
+<p><strong>核心发现</strong>：<br />
+- <strong>Tokenizer-free架构</strong>旨在完全消除固定的词汇表分词步骤，直接在原始字节或字符上操作<sup id="fnref:33^"><a class="footnote-ref" href="#fn:33^">33</a></sup>。主要分类：</p>
+<p><strong>（1）纯字节级建模</strong>：<br />
+- <strong>ByT5</strong>（Xue et al., 2022）：处理UTF-8字节序列，无需显式分词，在多语言和噪声鲁棒性上表现优异<sup id="fnref:34^"><a class="footnote-ref" href="#fn:34^">34</a></sup><br />
+- <strong>MambaByte</strong>（Wang et al., 2024）：基于选择性状态空间架构的无token模型，在语言建模任务上优于subword和字节级Transformer<sup id="fnref:35^"><a class="footnote-ref" href="#fn:35^">35</a></sup></p>
+<p><strong>（2）启发式分块的层次建模</strong>：<br />
+- <strong>MEGABYTE</strong>（Yu et al., 2023）：将字节序列分为固定大小的patch，全局模型处理patch间关系，局部模型处理patch内字节，实现百万字节序列的次二次方自注意力<sup id="fnref:36^"><a class="footnote-ref" href="#fn:36^">36</a></sup><br />
+- <strong>SpaceByte</strong>（Slagle, 2024）：在空格字符后应用更大的Transformer块，匹配subword Transformer性能<sup id="fnref:37^"><a class="footnote-ref" href="#fn:37^">37</a></sup></p>
+<p><strong>（3）动态分块的层次建模</strong>：<br />
+- <strong>Byte Latent Transformer (BLT)</strong>（Pagnoni et al., 2024, Meta）：基于<strong>熵的动态patching</strong>——小字节级语言模型计算下一个字节的熵，patch边界出现在下一个字节最难预测的位置。简单可预测区域（常见词）获得大patch，复杂区域（罕见词、代码、数字）获得小patch<sup id="fnref:38^"><a class="footnote-ref" href="#fn:38^">38</a></sup><br />
+- BLT在8B参数规模上<strong>匹配Llama 3性能</strong>，同时使用多达<strong>50%更少的推理FLOP</strong><sup id="fnref2:38^"><a class="footnote-ref" href="#fn:38^">38</a></sup><br />
+- <strong>H-Net</strong>（Hwang et al., 2025）：使用相邻表示的余弦相似度决定分块，端到端学习<sup id="fnref:39^"><a class="footnote-ref" href="#fn:39^">39</a></sup><br />
+- <strong>Fast BLT (BLT-D)</strong>（2026）：结合扩散目标实现字节级并行生成，加速推理<sup id="fnref:40^"><a class="footnote-ref" href="#fn:40^">40</a></sup></p>
+<p><strong>关键文献</strong>：<br />
+- Pagnoni et al., &ldquo;Byte Latent Transformer: Patches Scale Better Than Tokens,&rdquo; arXiv:2412.09871<sup id="fnref3:38^"><a class="footnote-ref" href="#fn:38^">38</a></sup><br />
+- Xue et al., &ldquo;ByT5: Towards a token-free future with pre-trained byte-to-byte models,&rdquo; TACL 2022<sup id="fnref2:34^"><a class="footnote-ref" href="#fn:34^">34</a></sup><br />
+- Yu et al., &ldquo;MEGABYTE: Predicting Million-byte Sequences with Multiscale Transformers,&rdquo; NeurIPS 2023<sup id="fnref2:36^"><a class="footnote-ref" href="#fn:36^">36</a></sup><br />
+- Wang et al., &ldquo;MambaByte: Token-free Selective State Space Model,&rdquo; COLM 2024<sup id="fnref2:35^"><a class="footnote-ref" href="#fn:35^">35</a></sup></p>
+<h3 id="9-词表大小对训练效率和上下文长度的影响">9. 词表大小对训练效率和上下文长度的影响<a class="headerlink" href="#9-词表大小对训练效率和上下文长度的影响" title="Permanent link">&para;</a></h3>
+<p><strong>核心发现</strong>：<br />
+- <strong>词汇表大小的快速增长</strong>：2023-2026年间词汇表大小增长了约8倍<sup id="fnref:41^"><a class="footnote-ref" href="#fn:41^">41</a></sup>：<br />
+  - Llama 2 (2023): 32K SentencePiece<br />
+  - Llama 3 (2024): 128K tiktoken-style<br />
+  - GPT-4o (2024): ~200K o200k_base<br />
+  - Gemma 3 (2025): 262K SentencePiece</p>
+<ul>
+<li><strong>压缩与泛化的权衡</strong><sup id="fnref:42^"><a class="footnote-ref" href="#fn:42^">49</a></sup>：</li>
+<li>太小的词汇表导致碎片化或过于细粒度的token，序列更长，语义表示下降</li>
+<li>太大的词汇表引入冗余，增加内存使用和模型开销</li>
+<li>
+<p>Tao et al. (NeurIPS 2024) 发现词汇表大小与训练损失之间存在对数线性关系</p>
+</li>
+<li>
+<p><strong>嵌入矩阵的内存瓶颈</strong>：大词汇表导致大型嵌入矩阵和LM head，增加推理时的计算和内存开销。对于资源受限的部署，这成为可扩展性瓶颈<sup id="fnref:43^"><a class="footnote-ref" href="#fn:43^">52</a></sup>。</p>
+</li>
+<li>
+<p><strong>最优嵌入学习率与词汇表大小的关系</strong>：Hayou和Liu（2025）的研究表明，当词汇表大小远大于嵌入维度时（m &gt;&gt; d），μP参数化的嵌入学习率不再最优。最优的嵌入LR/隐藏层LR比率应按<code>sqrt(d)</code>而非<code>d</code>缩放<sup id="fnref2:44^"><a class="footnote-ref" href="#fn:44^">42</a></sup>。</p>
+</li>
+<li>
+<p><strong>词汇表大小应该是模型大小的函数</strong>：Llama 2的32K词汇表对于7B模型是最优的，但对于70B变体，计算最优的词汇表应至少为216K（实际使用的7倍大）<sup id="fnref3:41^"><a class="footnote-ref" href="#fn:41^">41</a></sup>。</p>
+</li>
+</ul>
+<p><strong>关键文献</strong>：<br />
+- Tao et al., NeurIPS 2024 (词汇表大小scaling law)<sup id="fnref2:41^"><a class="footnote-ref" href="#fn:41^">41</a></sup><br />
+- Hayou &amp; Liu, &ldquo;Optimal Embedding Learning Rate in LLMs,&rdquo; arXiv:2506.15025<sup id="fnref:44^"><a class="footnote-ref" href="#fn:44^">42</a></sup></p>
+<h3 id="10-2024-2025-tokenizer设计的最新趋势">10. 2024-2025 Tokenizer设计的最新趋势<a class="headerlink" href="#10-2024-2025-tokenizer设计的最新趋势" title="Permanent link">&para;</a></h3>
+<p><strong>核心发现</strong>：</p>
+<p><strong>(a) Superword Tokenization——跨越空白的合并</strong>：<br />
+- <strong>SuperBPE</strong>（Liu et al., 2025）：引入预分词课程——第一阶段学习subword（标准BPE），第二阶段学习跨越空白的superword。在200K固定词汇表大小下比BPE减少33%的token<sup id="fnref:45^"><a class="footnote-ref" href="#fn:45^">43</a></sup><br />
+- <strong>BoundlessBPE</strong>（Schmidt et al., 2025）：独立提出放松预分词约束，将完整的pretoken合并为superwords。token频率分布更均匀（Rényi效率+21%），压缩提升约20%<sup id="fnref:46^"><a class="footnote-ref" href="#fn:46^">44</a></sup><br />
+- 下游任务准确率平均提升4.0%（SuperBPE在30个下游任务上），MMLU提升8.2%<sup id="fnref2:45^"><a class="footnote-ref" href="#fn:45^">43</a></sup></p>
+<p><strong>(b) 零样本Tokenizer迁移</strong>：<br />
+- <strong>ZeTT</strong>（Minixhofer et al., 2024）：使用超网络将训练好的LLM迁移到新tokenizer，大幅降低为多语言工作负载重新tokenize开源模型的成本<sup id="fnref:47^"><a class="footnote-ref" href="#fn:47^">45</a></sup></p>
+<p><strong>&copy; 词汇表扩展领域自适应</strong>：<br />
+- 为特定语言或领域（法律、医疗、代码）扩展词汇表成为常见做法。例如，Youtu-LLM从o200k词汇表出发，保留前100K ASCII token，然后训练中文特定token和代码/数学专用token<sup id="fnref:48^"><a class="footnote-ref" href="#fn:48^">46</a></sup></p>
+<p><strong>(d) 推理时自适应词汇</strong>：<br />
+- <strong>zip2zip</strong>（2025）：首个实现推理时动态词汇扩展的方法，基于输入上下文构建新token，无需重新训练或修改tokenizer<sup id="fnref:49^"><a class="footnote-ref" href="#fn:49^">47</a></sup></p>
+<p><strong>(e) 分词器公平性的量化与缓解</strong>：<br />
+- 多语言Tokenizer的公平性研究成为活跃领域。通过为每种语言确定最优词汇表大小、使用SuperBPE跨越空白合并、添加缺失的Unicode字符token等方法来降低token premium<sup id="fnref:50^"><a class="footnote-ref" href="#fn:50^">48</a></sup></p>
+<p><strong>关键文献</strong>：<br />
+- Liu et al., &ldquo;SuperBPE: Superword Tokenization,&rdquo; 2025<sup id="fnref3:45^"><a class="footnote-ref" href="#fn:45^">43</a></sup><br />
+- Schmidt et al., &ldquo;BoundlessBPE,&rdquo; 2025<sup id="fnref2:46^"><a class="footnote-ref" href="#fn:46^">44</a></sup><br />
+- Minixhofer et al., &ldquo;ZeTT: Zero-Shot Tokenizer Transfer,&rdquo; arXiv:2405.07883<sup id="fnref2:47^"><a class="footnote-ref" href="#fn:47^">45</a></sup></p>
+<hr />
+<h2 id="二重要论文和来源">二、重要论文和来源<a class="headerlink" href="#二重要论文和来源" title="Permanent link">&para;</a></h2>
+<h3 id="经典基础论文">经典基础论文<a class="headerlink" href="#经典基础论文" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>论文</th>
+<th>作者</th>
+<th>年份</th>
+<th>会议/来源</th>
+<th>核心贡献</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&ldquo;Neural Machine Translation of Rare Words with Subword Units&rdquo;</td>
+<td>Sennrich et al.</td>
+<td>2016</td>
+<td>ACL</td>
+<td>将BPE引入NLP<sup id="fnref3:1^"><a class="footnote-ref" href="#fn:1^">1</a></sup></td>
+</tr>
+<tr>
+<td>&ldquo;Japanese and Korean Voice Search&rdquo;</td>
+<td>Schuster &amp; Nakajima</td>
+<td>2012</td>
+<td>Google</td>
+<td>WordPiece算法<sup id="fnref3:6^"><a class="footnote-ref" href="#fn:6^">6</a></sup></td>
+</tr>
+<tr>
+<td>&ldquo;Google&rsquo;s Neural Machine Translation System&rdquo;</td>
+<td>Wu et al.</td>
+<td>2016</td>
+<td>arXiv</td>
+<td>WordPiece在GNMT中的应用<sup id="fnref2:10^"><a class="footnote-ref" href="#fn:10^">10</a></sup></td>
+</tr>
+<tr>
+<td>&ldquo;SentencePiece&rdquo;</td>
+<td>Kudo &amp; Richardson</td>
+<td>2018</td>
+<td>EMNLP</td>
+<td>语言无关分词工具包<sup id="fnref3:11^"><a class="footnote-ref" href="#fn:11^">11</a></sup></td>
+</tr>
+<tr>
+<td>&ldquo;Language Models are Unsupervised Multitask Learners&rdquo;</td>
+<td>Radford et al.</td>
+<td>2019</td>
+<td>OpenAI</td>
+<td>GPT-2 Byte-level BPE<sup id="fnref3:17^"><a class="footnote-ref" href="#fn:17^">17</a></sup></td>
+</tr>
+</tbody>
+</table>
+<h3 id="2020-2023重要研究">2020-2023重要研究<a class="headerlink" href="#2020-2023重要研究" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>论文</th>
+<th>作者</th>
+<th>年份</th>
+<th>核心贡献</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&ldquo;Byte Pair Encoding is Suboptimal for Language Model Pretraining&rdquo;</td>
+<td>Bostrom &amp; Durrett</td>
+<td>2020</td>
+<td>EMNLP Findings</td>
+</tr>
+<tr>
+<td>&ldquo;ByT5: Towards a token-free future&rdquo;</td>
+<td>Xue et al.</td>
+<td>2022</td>
+<td>TACL</td>
+</tr>
+<tr>
+<td>&ldquo;CANINE: Pre-training an Efficient Tokenization-Free Encoder&rdquo;</td>
+<td>Clark et al.</td>
+<td>2022</td>
+<td>TACL</td>
+</tr>
+<tr>
+<td>&ldquo;MEGABYTE&rdquo;</td>
+<td>Yu et al.</td>
+<td>2023</td>
+<td>NeurIPS</td>
+</tr>
+<tr>
+<td>&ldquo;Language Model Tokenizers Introduce Unfairness Between Languages&rdquo;</td>
+<td>Petrov et al.</td>
+<td>2023</td>
+<td>arXiv</td>
+</tr>
+</tbody>
+</table>
+<h3 id="2024-2025前沿研究">2024-2025前沿研究<a class="headerlink" href="#2024-2025前沿研究" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>论文</th>
+<th>作者</th>
+<th>年份</th>
+<th>核心贡献</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&ldquo;Byte Latent Transformer: Patches Scale Better Than Tokens&rdquo;</td>
+<td>Pagnoni et al. (Meta)</td>
+<td>2024</td>
+<td>arXiv</td>
+</tr>
+<tr>
+<td>&ldquo;MambaByte: Token-free Selective State Space Model&rdquo;</td>
+<td>Wang et al.</td>
+<td>2024</td>
+<td>COLM</td>
+</tr>
+<tr>
+<td>&ldquo;SuperBPE: Superword Tokenization&rdquo;</td>
+<td>Liu et al.</td>
+<td>2025</td>
+<td>arXiv</td>
+</tr>
+<tr>
+<td>&ldquo;BoundlessBPE&rdquo;</td>
+<td>Schmidt et al.</td>
+<td>2025</td>
+<td>arXiv</td>
+</tr>
+<tr>
+<td>&ldquo;TokDrift&rdquo;</td>
+<td>Nie et al.</td>
+<td>2025</td>
+<td>arXiv</td>
+</tr>
+<tr>
+<td>&ldquo;Fast Byte Latent Transformer&rdquo;</td>
+<td>(BLT-D)</td>
+<td>2026</td>
+<td>arXiv</td>
+</tr>
+<tr>
+<td>&ldquo;Improbable Bigrams Expose Vulnerabilities&rdquo;</td>
+<td></td>
+<td>2024</td>
+<td>arXiv</td>
+</tr>
+<tr>
+<td>&ldquo;Reducing Tokenization Premiums for Low-Resource Languages&rdquo;</td>
+<td></td>
+<td>2025</td>
+<td>arXiv</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="三趋势和信号">三、趋势和信号<a class="headerlink" href="#三趋势和信号" title="Permanent link">&para;</a></h2>
+<h3 id="趋势1词汇表大小持续扩张">趋势1：词汇表大小持续扩张<a class="headerlink" href="#趋势1词汇表大小持续扩张" title="Permanent link">&para;</a></h3>
+<p>从大模型历史看，词汇表大小呈指数增长。2023年主流模型（Llama 2）使用32K词汇表，到2025年Gemma 3已达262K。这一趋势受两个因素驱动：<br />
+1. <strong>多语言覆盖需求</strong>：更大词汇表可以为非拉丁文字分配更多token slot，减少token premium<br />
+2. <strong>计算效率</strong>：更大的词汇表产生更短的序列长度，减少自注意力计算</p>
+<h3 id="趋势2从固定tokenizer向动态自适应tokenizer演进">趋势2：从固定Tokenizer向动态/自适应Tokenizer演进<a class="headerlink" href="#趋势2从固定tokenizer向动态自适应tokenizer演进" title="Permanent link">&para;</a></h3>
+<p>传统BPE在训练前构建固定词汇表。新兴方向包括：<br />
+- <strong>动态patching（BLT）</strong>：根据输入内容自适应调整分块大小<br />
+- <strong>推理时自适应（zip2zip）</strong>：根据输入上下文动态构建新token<br />
+- <strong>领域自适应词汇扩展</strong>：针对特定领域或语言扩展现有tokenizer</p>
+<h3 id="趋势3tokenizer-free架构从概念走向实用">趋势3：Tokenizer-free架构从概念走向实用<a class="headerlink" href="#趋势3tokenizer-free架构从概念走向实用" title="Permanent link">&para;</a></h3>
+<ul>
+<li>BLT首次证明字节级模型可以在大规模（8B参数）上匹配BPE基线</li>
+<li>字节级模型消除了UNK、glitch token、多语言不平等等问题</li>
+<li>主要瓶颈是序列长度导致的注意力计算量，但层次化架构和状态空间模型正在缓解这一问题</li>
+<li>未来可能在多模态场景（直接处理文件字节）中率先取代tokenization</li>
+</ul>
+<h3 id="趋势4代码和多模态对tokenizer设计提出新要求">趋势4：代码和多模态对Tokenizer设计提出新要求<a class="headerlink" href="#趋势4代码和多模态对tokenizer设计提出新要求" title="Permanent link">&para;</a></h3>
+<ul>
+<li>代码需要语法感知的分词（TokDrift揭示了当前BPE的严重缺陷）</li>
+<li>数学公式需要特殊处理（LaTeX符号、数字序列）</li>
+<li>多模态输入（图像、音频的字节表示）推动tokenizer-free架构</li>
+</ul>
+<h3 id="趋势5tokenizer公平性成为核心设计考量">趋势5：Tokenizer公平性成为核心设计考量<a class="headerlink" href="#趋势5tokenizer公平性成为核心设计考量" title="Permanent link">&para;</a></h3>
+<ul>
+<li>2023年后，所有主要模型发布都将多语言token效率作为关键指标</li>
+<li>o200k_base、Llama 3 128K等明确以改善非英语tokenization为设计目标</li>
+<li>社区正在发展标准化的公平性度量（tokenization premium）和缓解方法</li>
+</ul>
+<hr />
+<h2 id="四争议和冲突观点">四、争议和冲突观点<a class="headerlink" href="#四争议和冲突观点" title="Permanent link">&para;</a></h2>
+<h3 id="争议1bpe是否是最优选择">争议1：BPE是否是最优选择？<a class="headerlink" href="#争议1bpe是否是最优选择" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>支持BPE</strong>：Bostrom &amp; Durrett (2020) 的论文标题直接指出&rdquo;BPE is Suboptimal&rdquo;，认为BPE不能有效利用词汇空间<sup id="fnref:51^"><a class="footnote-ref" href="#fn:51^">50</a></sup>。WordPiece和Unigram在理论上可能更优</li>
+<li><strong>支持BPE的反驳</strong>：实际上BPE仍是SOTA LLM的首选，因其内存需求低、实现简单、训练稳定。Ali et al. (2023) 发现对于英语任务，tokenizer选择影响可以忽略，但对多语言和翻译任务影响巨大<sup id="fnref:54^"><a class="footnote-ref" href="#fn:54^">51</a></sup></li>
+</ul>
+<h3 id="争议2大词汇表vs小词汇表">争议2：大词汇表vs小词汇表<a class="headerlink" href="#争议2大词汇表vs小词汇表" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>大词汇表支持者</strong>：更大的词汇表缩短序列长度、改善多语言覆盖、降低推理FLOP</li>
+<li><strong>小词汇表支持者</strong>：大词汇表增加嵌入矩阵内存、降低训练效率、可能导致低频token训练不足</li>
+<li><strong>Tao et al. (2024)</strong> 的发现：词汇表大小与训练损失之间存在对数线性关系，存在计算最优的词汇表大小</li>
+</ul>
+<h3 id="争议3tokenizer-free架构能否取代bpe">争议3：Tokenizer-free架构能否取代BPE？<a class="headerlink" href="#争议3tokenizer-free架构能否取代bpe" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>乐观派</strong>（Meta BLT团队）：字节级模型在固定推理成本下展现出比tokenizer模型更好的scaling特性<sup id="fnref4:38^"><a class="footnote-ref" href="#fn:38^">38</a></sup></li>
+<li><strong>谨慎派</strong>：字节级模型的序列长度仍然是主要瓶颈。虽然BLT在推理FLOP上有优势，但实际wall-clock时间优势尚不明确，且attention的quadratic复杂度对长序列仍是挑战</li>
+</ul>
+<h3 id="争议4tokenization-premium是否等于性能不平等">争议4：Tokenization Premium是否等于性能不平等？<a class="headerlink" href="#争议4tokenization-premium是否等于性能不平等" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Petrov et al. (2023)</strong> 量化了token count的不公平性</li>
+<li><strong>批评者</strong>指出：tokenization disparity不等于performance disparity。更高的premium可能反映形态学复杂性（如土耳其语的黏着性），而非tokenizer的缺陷</li>
+<li><strong>尚未验证</strong>：高premium是否因果性地降低任务性能，这一经验性联系尚未被测量<sup id="fnref3:26^"><a class="footnote-ref" href="#fn:26^">26</a></sup></li>
+</ul>
+<hr />
+<h2 id="五建议深入研究的领域">五、建议深入研究的领域<a class="headerlink" href="#五建议深入研究的领域" title="Permanent link">&para;</a></h2>
+<h3 id="第6章素材tokenizer的核心问题压缩与泛化">第6章素材：Tokenizer的核心问题（压缩与泛化）<a class="headerlink" href="#第6章素材tokenizer的核心问题压缩与泛化" title="Permanent link">&para;</a></h3>
+<p><strong>核心主题</strong>：Tokenizer在LLM中的双重角色——文本压缩与语义泛化之间的张力</p>
+<p><strong>建议深入方向</strong>：<br />
+1. <strong>压缩效率的度量</strong>：fertility（每词token比率）、power-law deviation、Rényi efficiency等内在指标与下游任务表现的相关性<br />
+2. <strong>词汇表构造的信息论视角</strong>：将tokenization视为有损/无损压缩问题，探讨最优分割点的信息论界限<br />
+3. <strong>Morphology-aware tokenization</strong>：如何设计更好地尊重形态学边界的tokenizer</p>
+<h3 id="第7章素材bpewordpiecesentencepiece到byte-level-tokenizer">第7章素材：BPE、WordPiece、SentencePiece到Byte-level Tokenizer<a class="headerlink" href="#第7章素材bpewordpiecesentencepiece到byte-level-tokenizer" title="Permanent link">&para;</a></h3>
+<p><strong>核心主题</strong>：分词技术的完整演进链条及其工程实践</p>
+<p><strong>建议深入方向</strong>：<br />
+1. <strong>BPE的贪心策略分析</strong>：为什么贪心合并在实践中有效，理论上的次优性在何种条件下显著<br />
+2. <strong>WordPiece的PMI标准vs BPE的频率标准</strong>：何时PMI显著优于频率，BERT的经验教训<br />
+3. <strong>SentencePiece的无预分词设计</strong>：Unicode直接处理的优势、代价和边界情况<br />
+4. <strong>Byte-level BPE的UTF-8编码问题</strong>：字节premium效应对不同文字系统的影响量化<br />
+5. <strong>各代GPT tokenizer的工程决策细节</strong>：正则表达式模式的演变、特殊token的设计哲学</p>
+<h3 id="第8章素材2023-2026-tokenizer的新问题">第8章素材：2023-2026 Tokenizer的新问题<a class="headerlink" href="#第8章素材2023-2026-tokenizer的新问题" title="Permanent link">&para;</a></h3>
+<p><strong>核心主题</strong>：大模型时代tokenization面临的新挑战和新范式</p>
+<p><strong>建议深入方向</strong>：<br />
+1. <strong>多语言Tokenizer公平性的系统性研究</strong>：token premium的分解（形态学vs tokenizer偏差）、标准化评估协议<br />
+2. <strong>代码和数学领域的专用tokenizer设计</strong>：语法感知分词、数字处理、LaTeX符号<br />
+3. <strong>Tokenizer-free架构的实用化路径</strong>：BLT类方法的效率优化、与现有推理基础设施的兼容性<br />
+4. <strong>Glitch token和安全漏洞</strong>：不完整token的安全风险、自动化检测（GlitchMiner）、防御策略<br />
+5. <strong>词汇表动态扩展和迁移</strong>：ZeTT、zip2zip等方法如何在生产环境中部署<br />
+6. <strong>Superword tokenization的前景</strong>：SuperBPE和BoundlessBPE是否能成为下一代标准<br />
+7. <strong>Tokenizer与模型训练动态的关系</strong>：词汇表大小对学习率、收敛速度、最终性能的影响</p>
+<hr />
+<h2 id="引用索引">引用索引<a class="headerlink" href="#引用索引" title="Permanent link">&para;</a></h2>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1^">
+<p>Sennrich et al., &ldquo;Neural Machine Translation of Rare Words with Subword Units,&rdquo; ACL 2016&#160;<a class="footnote-backref" href="#fnref:1^" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:1^" title="Jump back to footnote 1 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:1^" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+<li id="fn:2^">
+<p>arXiv:2506.01687, &ldquo;StochasTok: Improving Fine-Grained Subword Understanding in LLMs&rdquo;&#160;<a class="footnote-backref" href="#fnref:2^" title="Jump back to footnote 2 in the text">&#8617;</a></p>
+</li>
+<li id="fn:3^">
+<p>arXiv:2506.01687, BPE作为SOTA LLM首选&#160;<a class="footnote-backref" href="#fnref:3^" title="Jump back to footnote 3 in the text">&#8617;</a></p>
+</li>
+<li id="fn:4^">
+<p>arXiv:2508.04796, &ldquo;Evaluation of Coding Schemes for Transformer-based Gene Sequence Modeling&rdquo;&#160;<a class="footnote-backref" href="#fnref:4^" title="Jump back to footnote 4 in the text">&#8617;</a></p>
+</li>
+<li id="fn:5^">
+<p>Gage, &ldquo;A New Algorithm for Data Compression,&rdquo; The C Users Journal, 1994&#160;<a class="footnote-backref" href="#fnref:5^" title="Jump back to footnote 5 in the text">&#8617;</a></p>
+</li>
+<li id="fn:6^">
+<p>Schuster &amp; Nakajima, &ldquo;Japanese and Korean Voice Search,&rdquo; 2012&#160;<a class="footnote-backref" href="#fnref:6^" title="Jump back to footnote 6 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:6^" title="Jump back to footnote 6 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:6^" title="Jump back to footnote 6 in the text">&#8617;</a></p>
+</li>
+<li id="fn:7^">
+<p>arXiv:2402.18376, &ldquo;Tokenization Is More Than Compression&rdquo;&#160;<a class="footnote-backref" href="#fnref:7^" title="Jump back to footnote 7 in the text">&#8617;</a></p>
+</li>
+<li id="fn:8^">
+<p>arXiv:2409.14579, &ldquo;Medical Concept Normalization in a Low-Resource Setting&rdquo;&#160;<a class="footnote-backref" href="#fnref:8^" title="Jump back to footnote 8 in the text">&#8617;</a></p>
+</li>
+<li id="fn:9^">
+<p>arXiv:2004.03720, &ldquo;Byte Pair Encoding is Suboptimal for Language Model Pretraining&rdquo;&#160;<a class="footnote-backref" href="#fnref:9^" title="Jump back to footnote 9 in the text">&#8617;</a></p>
+</li>
+<li id="fn:10^">
+<p>Wu et al., &ldquo;Google&rsquo;s Neural Machine Translation System,&rdquo; 2016&#160;<a class="footnote-backref" href="#fnref:10^" title="Jump back to footnote 10 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:10^" title="Jump back to footnote 10 in the text">&#8617;</a></p>
+</li>
+<li id="fn:11^">
+<p>Kudo &amp; Richardson, &ldquo;SentencePiece,&rdquo; EMNLP 2018&#160;<a class="footnote-backref" href="#fnref:11^" title="Jump back to footnote 11 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:11^" title="Jump back to footnote 11 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:11^" title="Jump back to footnote 11 in the text">&#8617;</a></p>
+</li>
+<li id="fn:12^">
+<p>arXiv:2106.07540, &ldquo;Evaluating Various Tokenizers for Arabic Text Classification&rdquo;&#160;<a class="footnote-backref" href="#fnref:12^" title="Jump back to footnote 12 in the text">&#8617;</a></p>
+</li>
+<li id="fn:13^">
+<p>arXiv:2406.19223, &ldquo;Tokenizer-Free Generative LLMs via Sparse Representations&rdquo;&#160;<a class="footnote-backref" href="#fnref:13^" title="Jump back to footnote 13 in the text">&#8617;</a></p>
+</li>
+<li id="fn:14^">
+<p>arXiv:2512.12641, &ldquo;Which Pieces Does Unigram Tokenization Really Need?&rdquo;&#160;<a class="footnote-backref" href="#fnref:14^" title="Jump back to footnote 14 in the text">&#8617;</a></p>
+</li>
+<li id="fn:15^">
+<p>arXiv:2009.12534, &ldquo;iNLTK: Natural Language Toolkit for Indic Languages&rdquo;&#160;<a class="footnote-backref" href="#fnref:15^" title="Jump back to footnote 15 in the text">&#8617;</a></p>
+</li>
+<li id="fn:16^">
+<p>Kudo, &ldquo;Subword Regularization,&rdquo; ACL 2018&#160;<a class="footnote-backref" href="#fnref:16^" title="Jump back to footnote 16 in the text">&#8617;</a></p>
+</li>
+<li id="fn:17^">
+<p>Radford et al., &ldquo;Language Models are Unsupervised Multitask Learners,&rdquo; 2019&#160;<a class="footnote-backref" href="#fnref:17^" title="Jump back to footnote 17 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:17^" title="Jump back to footnote 17 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:17^" title="Jump back to footnote 17 in the text">&#8617;</a></p>
+</li>
+<li id="fn:18^">
+<p>arXiv:2604.17814, &ldquo;Understanding Secret Leakage Risks in Code LLMs&rdquo;&#160;<a class="footnote-backref" href="#fnref:18^" title="Jump back to footnote 18 in the text">&#8617;</a></p>
+</li>
+<li id="fn:19^">
+<p>tiktoken library, OpenAI&#160;<a class="footnote-backref" href="#fnref:19^" title="Jump back to footnote 19 in the text">&#8617;</a></p>
+</li>
+<li id="fn:20^">
+<p>arXiv:2505.24689, &ldquo;Structured Encoding for Robust Multilingual Pretokenization&rdquo;&#160;<a class="footnote-backref" href="#fnref:20^" title="Jump back to footnote 20 in the text">&#8617;</a></p>
+</li>
+<li id="fn:21^">
+<p>Multiple sources on GPT-&#8532; tokenizer&#160;<a class="footnote-backref" href="#fnref:21^" title="Jump back to footnote 21 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:21^" title="Jump back to footnote 21 in the text">&#8617;</a></p>
+</li>
+<li id="fn:22^">
+<p>fast.ai blog on GPT tokenizer; tiktoken openai_public.py source&#160;<a class="footnote-backref" href="#fnref:22^" title="Jump back to footnote 22 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:22^" title="Jump back to footnote 22 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:22^" title="Jump back to footnote 22 in the text">&#8617;</a></p>
+</li>
+<li id="fn:23^">
+<p>futureagi.com blog; OpenAI documentation&#160;<a class="footnote-backref" href="#fnref:23^" title="Jump back to footnote 23 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:23^" title="Jump back to footnote 23 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:23^" title="Jump back to footnote 23 in the text">&#8617;</a></p>
+</li>
+<li id="fn:24^">
+<p>njkumar.com blog on multilingual token compression&#160;<a class="footnote-backref" href="#fnref:24^" title="Jump back to footnote 24 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:24^" title="Jump back to footnote 24 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:24^" title="Jump back to footnote 24 in the text">&#8617;</a></p>
+</li>
+<li id="fn:25^">
+<p>Petrov et al., &ldquo;Language Model Tokenizers Introduce Unfairness,&rdquo; arXiv:2305.15425&#160;<a class="footnote-backref" href="#fnref:25^" title="Jump back to footnote 25 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:25^" title="Jump back to footnote 25 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:25^" title="Jump back to footnote 25 in the text">&#8617;</a></p>
+</li>
+<li id="fn:26^">
+<p>anuadesina.com, &ldquo;The Tokenization Tax&rdquo;&#160;<a class="footnote-backref" href="#fnref:26^" title="Jump back to footnote 26 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:26^" title="Jump back to footnote 26 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:26^" title="Jump back to footnote 26 in the text">&#8617;</a></p>
+</li>
+<li id="fn:27^">
+<p>iotdigitaltwinplm.com, &ldquo;LLM Tokenization Deep Dive&rdquo;&#160;<a class="footnote-backref" href="#fnref:27^" title="Jump back to footnote 27 in the text">&#8617;</a></p>
+</li>
+<li id="fn:28^">
+<p>Petrov et al., 2023; arXiv:2505.24689&#160;<a class="footnote-backref" href="#fnref:28^" title="Jump back to footnote 28 in the text">&#8617;</a></p>
+</li>
+<li id="fn:29^">
+<p>emergentmind.com, &ldquo;Multilingual GPT-Scale Tokenizers&rdquo;&#160;<a class="footnote-backref" href="#fnref:29^" title="Jump back to footnote 29 in the text">&#8617;</a></p>
+</li>
+<li id="fn:30^">
+<p>Nie et al., &ldquo;TokDrift,&rdquo; arXiv:2510.14972&#160;<a class="footnote-backref" href="#fnref:30^" title="Jump back to footnote 30 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:30^" title="Jump back to footnote 30 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:30^" title="Jump back to footnote 30 in the text">&#8617;</a><a class="footnote-backref" href="#fnref4:30^" title="Jump back to footnote 30 in the text">&#8617;</a></p>
+</li>
+<li id="fn:31^">
+<p>Various sources on mathematical tokenization challenges&#160;<a class="footnote-backref" href="#fnref:31^" title="Jump back to footnote 31 in the text">&#8617;</a></p>
+</li>
+<li id="fn:32^">
+<p>Ahmad et al., &ldquo;CodeBPE,&rdquo; arXiv:2308.00683&#160;<a class="footnote-backref" href="#fnref:32^" title="Jump back to footnote 32 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:32^" title="Jump back to footnote 32 in the text">&#8617;</a></p>
+</li>
+<li id="fn:33^">
+<p>arXiv:2603.03583, &ldquo;ByteFlow: Language Modeling through Adaptive Byte Compression&rdquo;&#160;<a class="footnote-backref" href="#fnref:33^" title="Jump back to footnote 33 in the text">&#8617;</a></p>
+</li>
+<li id="fn:34^">
+<p>Xue et al., &ldquo;ByT5,&rdquo; TACL 2022&#160;<a class="footnote-backref" href="#fnref:34^" title="Jump back to footnote 34 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:34^" title="Jump back to footnote 34 in the text">&#8617;</a></p>
+</li>
+<li id="fn:35^">
+<p>Wang et al., &ldquo;MambaByte,&rdquo; COLM 2024&#160;<a class="footnote-backref" href="#fnref:35^" title="Jump back to footnote 35 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:35^" title="Jump back to footnote 35 in the text">&#8617;</a></p>
+</li>
+<li id="fn:36^">
+<p>Yu et al., &ldquo;MEGABYTE,&rdquo; NeurIPS 2023&#160;<a class="footnote-backref" href="#fnref:36^" title="Jump back to footnote 36 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:36^" title="Jump back to footnote 36 in the text">&#8617;</a></p>
+</li>
+<li id="fn:37^">
+<p>Slagle, &ldquo;SpaceByte,&rdquo; NeurIPS 2024&#160;<a class="footnote-backref" href="#fnref:37^" title="Jump back to footnote 37 in the text">&#8617;</a></p>
+</li>
+<li id="fn:38^">
+<p>Pagnoni et al., &ldquo;Byte Latent Transformer,&rdquo; arXiv:2412.09871&#160;<a class="footnote-backref" href="#fnref:38^" title="Jump back to footnote 38 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:38^" title="Jump back to footnote 38 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:38^" title="Jump back to footnote 38 in the text">&#8617;</a><a class="footnote-backref" href="#fnref4:38^" title="Jump back to footnote 38 in the text">&#8617;</a></p>
+</li>
+<li id="fn:39^">
+<p>Hwang et al., &ldquo;H-Net,&rdquo; 2025&#160;<a class="footnote-backref" href="#fnref:39^" title="Jump back to footnote 39 in the text">&#8617;</a></p>
+</li>
+<li id="fn:40^">
+<p>arXiv:2605.08044, &ldquo;Fast Byte Latent Transformer&rdquo;&#160;<a class="footnote-backref" href="#fnref:40^" title="Jump back to footnote 40 in the text">&#8617;</a></p>
+</li>
+<li id="fn:41^">
+<p>letsdatascience.com, &ldquo;Tokenization Deep Dive&rdquo;&#160;<a class="footnote-backref" href="#fnref:41^" title="Jump back to footnote 41 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:41^" title="Jump back to footnote 41 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:41^" title="Jump back to footnote 41 in the text">&#8617;</a></p>
+</li>
+<li id="fn:44^">
+<p>Hayou &amp; Liu, &ldquo;Optimal Embedding Learning Rate in LLMs,&rdquo; arXiv:2506.15025&#160;<a class="footnote-backref" href="#fnref:44^" title="Jump back to footnote 42 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:44^" title="Jump back to footnote 42 in the text">&#8617;</a></p>
+</li>
+<li id="fn:45^">
+<p>Liu et al., &ldquo;SuperBPE,&rdquo; 2025&#160;<a class="footnote-backref" href="#fnref:45^" title="Jump back to footnote 43 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:45^" title="Jump back to footnote 43 in the text">&#8617;</a><a class="footnote-backref" href="#fnref3:45^" title="Jump back to footnote 43 in the text">&#8617;</a></p>
+</li>
+<li id="fn:46^">
+<p>Schmidt et al., &ldquo;BoundlessBPE,&rdquo; arXiv:2504.00178&#160;<a class="footnote-backref" href="#fnref:46^" title="Jump back to footnote 44 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:46^" title="Jump back to footnote 44 in the text">&#8617;</a></p>
+</li>
+<li id="fn:47^">
+<p>Minixhofer et al., &ldquo;ZeTT,&rdquo; arXiv:2405.07883&#160;<a class="footnote-backref" href="#fnref:47^" title="Jump back to footnote 45 in the text">&#8617;</a><a class="footnote-backref" href="#fnref2:47^" title="Jump back to footnote 45 in the text">&#8617;</a></p>
+</li>
+<li id="fn:48^">
+<p>arXiv:2512.24618, &ldquo;Youtu-LLM&rdquo;&#160;<a class="footnote-backref" href="#fnref:48^" title="Jump back to footnote 46 in the text">&#8617;</a></p>
+</li>
+<li id="fn:49^">
+<p>arXiv:2506.01084, &ldquo;zip2zip: Inference-Time Adaptive Vocabularies&rdquo;&#160;<a class="footnote-backref" href="#fnref:49^" title="Jump back to footnote 47 in the text">&#8617;</a></p>
+</li>
+<li id="fn:50^">
+<p>arXiv:2601.13328, &ldquo;Reducing Tokenization Premiums for Low-Resource Languages&rdquo;&#160;<a class="footnote-backref" href="#fnref:50^" title="Jump back to footnote 48 in the text">&#8617;</a></p>
+</li>
+<li id="fn:42^">
+<p>arXiv:2507.22543, &ldquo;Pre-trained Models Perform the Best When Token Distributions Follow Zipf&rsquo;s Law&rdquo;&#160;<a class="footnote-backref" href="#fnref:42^" title="Jump back to footnote 49 in the text">&#8617;</a></p>
+</li>
+<li id="fn:51^">
+<p>Bostrom &amp; Durrett, &ldquo;BPE is Suboptimal,&rdquo; EMNLP 2020 Findings&#160;<a class="footnote-backref" href="#fnref:51^" title="Jump back to footnote 50 in the text">&#8617;</a></p>
+</li>
+<li id="fn:54^">
+<p>Ali et al., &ldquo;Tokenizer choice for LLM training,&rdquo; arXiv:2310.08754&#160;<a class="footnote-backref" href="#fnref:54^" title="Jump back to footnote 51 in the text">&#8617;</a></p>
+</li>
+<li id="fn:43^">
+<p>arXiv:2508.15229, &ldquo;VocabTailor: Dynamic Vocabulary Selection&rdquo;&#160;<a class="footnote-backref" href="#fnref:43^" title="Jump back to footnote 52 in the text">&#8617;</a></p>
+</li>
+<li id="fn:52^">
+<p>Clark et al., &ldquo;CANINE,&rdquo; TACL 2022&#160;<a class="footnote-backref" href="#fnref:52^" title="Jump back to footnote 53 in the text">&#8617;</a></p>
+</li>
+<li id="fn:53^">
+<p>arXiv:2410.23684, &ldquo;Improbable Bigrams Expose Vulnerabilities&rdquo;&#160;<a class="footnote-backref" href="#fnref:53^" title="Jump back to footnote 54 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.select", "content.tooltips"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.60a45f97.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  <script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(() => { lightbox.reload() });
+</script></body>
+</html>

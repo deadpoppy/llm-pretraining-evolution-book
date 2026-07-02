@@ -1,0 +1,3183 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="从 Scaling Law 到数据配方与分布式训练">
+      
+      
+      
+        <link rel="canonical" href="https://deadpoppy.github.io/llm-pretraining-evolution-book/research/llm_pretraining_wide07/">
+      
+      
+        <link rel="prev" href="../llm_pretraining_wide06/">
+      
+      
+        <link rel="next" href="../llm_pretraining_wide08/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.50">
+    
+    
+      
+        <title>Wide 07 - 大语言模型预训练技术演进</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.a40c8224.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+SC:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Noto Sans SC";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/book.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+   <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
+    html.glightbox-open { overflow: initial; height: 100%; }
+    .gslide-title { margin-top: 0px; user-select: text; }
+    .gslide-desc { color: #666; user-select: text; }
+    .gslide-image img { background: white; }
+    .gscrollbar-fixer { padding-right: 15px; }
+    .gdesc-inner { font-size: 0.75rem; }
+    body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
+    body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
+    body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}</style> <script src="../../assets/javascripts/glightbox.min.js"></script></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#研究报告模型架构与预训练目标的新变化第22-25章素材" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="大语言模型预训练技术演进" class="md-header__button md-logo" aria-label="大语言模型预训练技术演进" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            大语言模型预训练技术演进
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Wide 07
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="teal"  aria-label="切换到深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="teal"  aria-label="切换到浅色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/deadpoppy/llm-pretraining-evolution-book" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    deadpoppy/llm-pretraining-evolution-book
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../chapters/llm_pretraining_sec00/" class="md-tabs__link">
+          
+  
+    
+  
+  正文
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../full-book/" class="md-tabs__link">
+          
+  
+    
+  
+  附录
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../llm_pretraining_wide01/" class="md-tabs__link">
+          
+  
+    
+  
+  研究材料
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="大语言模型预训练技术演进" class="md-nav__button md-logo" aria-label="大语言模型预训练技术演进" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    大语言模型预训练技术演进
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/deadpoppy/llm-pretraining-evolution-book" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    deadpoppy/llm-pretraining-evolution-book
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    首页
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    正文
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            正文
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec00/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    导读
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec01/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第1章 预训练的前史
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec02/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第2章 Transformer 改变底层结构
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec03/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第3章 GPT 路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec04/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第4章 BERT 路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec05/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第5章 T5、BART 与统一文本到文本
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec06/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第6章 Tokenizer 的核心问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec07/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第7章 BPE 到 Byte-level Tokenizer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec08/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第8章 Tokenizer 的新问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec09/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第9章 Scaling Law 的提出
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec10/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第10章 GPT-3 与大模型涌现
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec11/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第11章 Chinchilla Scaling Law
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec12/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第12章 Scaling Law 的新阶段
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec13/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第13章 预训练数据的基本构成
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec14/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第14章 大规模语料堆叠阶段
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec15/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第15章 数据配比成为核心技术
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec16/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第16章 数据配比的新趋势
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec17/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第17章 分布式训练的基本矛盾
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec18/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第18章 并行训练的三大路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec19/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第19章 3D 并行与千卡训练
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec20/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第20章 长上下文与高效 Attention
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec21/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第21章 新一代训练系统趋势
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec22/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第22章 MoE 稀疏激活模型
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec23/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第23章 Multi-token Prediction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec24/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第24章 长上下文预训练
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec25/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第25章 多模态预训练的并入
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec26/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第26章 Llama 3 训练配方
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec27/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第27章 DeepSeek-V3 代表案例
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec28/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第28章 Qwen3 与多语言开源模型
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec29/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第29章 推理模型的反向影响
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec30/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第30章 2026 之后的关键问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../chapters/llm_pretraining_sec31/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    结语
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    附录
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            附录
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../full-book/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    完整书稿
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../outline/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    章节大纲
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plan/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    写作计划
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    研究材料
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            研究材料
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide01/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 01
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide02/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 02
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide03/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 03
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide04/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 04
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide05/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 05
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide06/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 06
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Wide 07
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Wide 07
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#第22章moe从稠密模型到稀疏激活模型" class="md-nav__link">
+    <span class="md-ellipsis">
+      第22章：MoE从稠密模型到稀疏激活模型
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="第22章：MoE从稠密模型到稀疏激活模型">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#221-moe架构的起源与发展脉络" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.1 MoE架构的起源与发展脉络
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#222-switch-transformer极简路由的探索" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.2 Switch Transformer：极简路由的探索
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#223-gshard分布式moe训练的工程突破" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.3 GShard：分布式MoE训练的工程突破
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#224-st-moe稳定性与训练策略的深入分析" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.4 ST-MoE：稳定性与训练策略的深入分析
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#225-路由负载均衡与训练稳定性问题" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.5 路由、负载均衡与训练稳定性问题
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#226-deepseekmoe工程化创新的典范" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.6 DeepSeekMoE：工程化创新的典范
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#227-mixtral-8x7b开源moe的里程碑" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.7 Mixtral 8x7B：开源MoE的里程碑
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#228-moe训练的关键工程挑战" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.8 MoE训练的关键工程挑战
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#第23章multi-token-prediction" class="md-nav__link">
+    <span class="md-ellipsis">
+      第23章：Multi-token Prediction
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="第23章：Multi-token Prediction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#231-从单token预测到多token预测的范式转变" class="md-nav__link">
+    <span class="md-ellipsis">
+      23.1 从单token预测到多token预测的范式转变
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#232-meta的multi-token-prediction工作" class="md-nav__link">
+    <span class="md-ellipsis">
+      23.2 Meta的Multi-token Prediction工作
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#233-deepseek-v3的mtp实现" class="md-nav__link">
+    <span class="md-ellipsis">
+      23.3 DeepSeek-V3的MTP实现
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#234-mtp与推理加速" class="md-nav__link">
+    <span class="md-ellipsis">
+      23.4 MTP与推理加速
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#235-mtp的变体与改进" class="md-nav__link">
+    <span class="md-ellipsis">
+      23.5 MTP的变体与改进
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#236-mtp的广泛采用" class="md-nav__link">
+    <span class="md-ellipsis">
+      23.6 MTP的广泛采用
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#第24章长上下文预训练" class="md-nav__link">
+    <span class="md-ellipsis">
+      第24章：长上下文预训练
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="第24章：长上下文预训练">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#241-长上下文的重要性与挑战" class="md-nav__link">
+    <span class="md-ellipsis">
+      24.1 长上下文的重要性与挑战
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#242-位置编码扩展技术" class="md-nav__link">
+    <span class="md-ellipsis">
+      24.2 位置编码扩展技术
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#243-从短上下文到长上下文的扩展策略" class="md-nav__link">
+    <span class="md-ellipsis">
+      24.3 从短上下文到长上下文的扩展策略
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#244-长上下文数据工程" class="md-nav__link">
+    <span class="md-ellipsis">
+      24.4 长上下文数据工程
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#245-长上下文评估" class="md-nav__link">
+    <span class="md-ellipsis">
+      24.5 长上下文评估
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#246-高效长上下文技术" class="md-nav__link">
+    <span class="md-ellipsis">
+      24.6 高效长上下文技术
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#第25章多模态预训练的并入" class="md-nav__link">
+    <span class="md-ellipsis">
+      第25章：多模态预训练的并入
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="第25章：多模态预训练的并入">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#251-从文本到多模态的扩展范式" class="md-nav__link">
+    <span class="md-ellipsis">
+      25.1 从文本到多模态的扩展范式
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#252-组合式多模态模型llava范式" class="md-nav__link">
+    <span class="md-ellipsis">
+      25.2 组合式多模态模型：LLaVA范式
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#253-原生多模态模型chameleon与gemini范式" class="md-nav__link">
+    <span class="md-ellipsis">
+      25.3 原生多模态模型：Chameleon与Gemini范式
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#254-原生多模态-vs-组合式关键对比" class="md-nav__link">
+    <span class="md-ellipsis">
+      25.4 原生多模态 vs 组合式：关键对比
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#255-多模态token与文本token的对齐问题" class="md-nav__link">
+    <span class="md-ellipsis">
+      25.5 多模态Token与文本Token的对齐问题
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#256-deepseek-vl2moe-meets多模态" class="md-nav__link">
+    <span class="md-ellipsis">
+      25.6 DeepSeek-VL2：MoE meets多模态
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#257-多模态模型的scaling-law" class="md-nav__link">
+    <span class="md-ellipsis">
+      25.7 多模态模型的Scaling Law
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#258-多模态预训练的技术挑战" class="md-nav__link">
+    <span class="md-ellipsis">
+      25.8 多模态预训练的技术挑战
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#重要论文和来源" class="md-nav__link">
+    <span class="md-ellipsis">
+      重要论文和来源
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="重要论文和来源">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#moe架构" class="md-nav__link">
+    <span class="md-ellipsis">
+      MoE架构
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-token-prediction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-token Prediction
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#长上下文" class="md-nav__link">
+    <span class="md-ellipsis">
+      长上下文
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#多模态预训练" class="md-nav__link">
+    <span class="md-ellipsis">
+      多模态预训练
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#趋势和信号" class="md-nav__link">
+    <span class="md-ellipsis">
+      趋势和信号
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#争议和冲突观点" class="md-nav__link">
+    <span class="md-ellipsis">
+      争议和冲突观点
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#建议深入研究的领域" class="md-nav__link">
+    <span class="md-ellipsis">
+      建议深入研究的领域
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#参考文献索引" class="md-nav__link">
+    <span class="md-ellipsis">
+      参考文献索引
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_wide08/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 08
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#第22章moe从稠密模型到稀疏激活模型" class="md-nav__link">
+    <span class="md-ellipsis">
+      第22章：MoE从稠密模型到稀疏激活模型
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="第22章：MoE从稠密模型到稀疏激活模型">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#221-moe架构的起源与发展脉络" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.1 MoE架构的起源与发展脉络
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#222-switch-transformer极简路由的探索" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.2 Switch Transformer：极简路由的探索
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#223-gshard分布式moe训练的工程突破" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.3 GShard：分布式MoE训练的工程突破
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#224-st-moe稳定性与训练策略的深入分析" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.4 ST-MoE：稳定性与训练策略的深入分析
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#225-路由负载均衡与训练稳定性问题" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.5 路由、负载均衡与训练稳定性问题
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#226-deepseekmoe工程化创新的典范" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.6 DeepSeekMoE：工程化创新的典范
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#227-mixtral-8x7b开源moe的里程碑" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.7 Mixtral 8x7B：开源MoE的里程碑
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#228-moe训练的关键工程挑战" class="md-nav__link">
+    <span class="md-ellipsis">
+      22.8 MoE训练的关键工程挑战
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#第23章multi-token-prediction" class="md-nav__link">
+    <span class="md-ellipsis">
+      第23章：Multi-token Prediction
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="第23章：Multi-token Prediction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#231-从单token预测到多token预测的范式转变" class="md-nav__link">
+    <span class="md-ellipsis">
+      23.1 从单token预测到多token预测的范式转变
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#232-meta的multi-token-prediction工作" class="md-nav__link">
+    <span class="md-ellipsis">
+      23.2 Meta的Multi-token Prediction工作
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#233-deepseek-v3的mtp实现" class="md-nav__link">
+    <span class="md-ellipsis">
+      23.3 DeepSeek-V3的MTP实现
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#234-mtp与推理加速" class="md-nav__link">
+    <span class="md-ellipsis">
+      23.4 MTP与推理加速
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#235-mtp的变体与改进" class="md-nav__link">
+    <span class="md-ellipsis">
+      23.5 MTP的变体与改进
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#236-mtp的广泛采用" class="md-nav__link">
+    <span class="md-ellipsis">
+      23.6 MTP的广泛采用
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#第24章长上下文预训练" class="md-nav__link">
+    <span class="md-ellipsis">
+      第24章：长上下文预训练
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="第24章：长上下文预训练">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#241-长上下文的重要性与挑战" class="md-nav__link">
+    <span class="md-ellipsis">
+      24.1 长上下文的重要性与挑战
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#242-位置编码扩展技术" class="md-nav__link">
+    <span class="md-ellipsis">
+      24.2 位置编码扩展技术
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#243-从短上下文到长上下文的扩展策略" class="md-nav__link">
+    <span class="md-ellipsis">
+      24.3 从短上下文到长上下文的扩展策略
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#244-长上下文数据工程" class="md-nav__link">
+    <span class="md-ellipsis">
+      24.4 长上下文数据工程
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#245-长上下文评估" class="md-nav__link">
+    <span class="md-ellipsis">
+      24.5 长上下文评估
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#246-高效长上下文技术" class="md-nav__link">
+    <span class="md-ellipsis">
+      24.6 高效长上下文技术
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#第25章多模态预训练的并入" class="md-nav__link">
+    <span class="md-ellipsis">
+      第25章：多模态预训练的并入
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="第25章：多模态预训练的并入">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#251-从文本到多模态的扩展范式" class="md-nav__link">
+    <span class="md-ellipsis">
+      25.1 从文本到多模态的扩展范式
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#252-组合式多模态模型llava范式" class="md-nav__link">
+    <span class="md-ellipsis">
+      25.2 组合式多模态模型：LLaVA范式
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#253-原生多模态模型chameleon与gemini范式" class="md-nav__link">
+    <span class="md-ellipsis">
+      25.3 原生多模态模型：Chameleon与Gemini范式
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#254-原生多模态-vs-组合式关键对比" class="md-nav__link">
+    <span class="md-ellipsis">
+      25.4 原生多模态 vs 组合式：关键对比
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#255-多模态token与文本token的对齐问题" class="md-nav__link">
+    <span class="md-ellipsis">
+      25.5 多模态Token与文本Token的对齐问题
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#256-deepseek-vl2moe-meets多模态" class="md-nav__link">
+    <span class="md-ellipsis">
+      25.6 DeepSeek-VL2：MoE meets多模态
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#257-多模态模型的scaling-law" class="md-nav__link">
+    <span class="md-ellipsis">
+      25.7 多模态模型的Scaling Law
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#258-多模态预训练的技术挑战" class="md-nav__link">
+    <span class="md-ellipsis">
+      25.8 多模态预训练的技术挑战
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#重要论文和来源" class="md-nav__link">
+    <span class="md-ellipsis">
+      重要论文和来源
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="重要论文和来源">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#moe架构" class="md-nav__link">
+    <span class="md-ellipsis">
+      MoE架构
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-token-prediction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multi-token Prediction
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#长上下文" class="md-nav__link">
+    <span class="md-ellipsis">
+      长上下文
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#多模态预训练" class="md-nav__link">
+    <span class="md-ellipsis">
+      多模态预训练
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#趋势和信号" class="md-nav__link">
+    <span class="md-ellipsis">
+      趋势和信号
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#争议和冲突观点" class="md-nav__link">
+    <span class="md-ellipsis">
+      争议和冲突观点
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#建议深入研究的领域" class="md-nav__link">
+    <span class="md-ellipsis">
+      建议深入研究的领域
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#参考文献索引" class="md-nav__link">
+    <span class="md-ellipsis">
+      参考文献索引
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="研究报告模型架构与预训练目标的新变化第22-25章素材">研究报告：模型架构与预训练目标的新变化（第22-25章素材）<a class="headerlink" href="#研究报告模型架构与预训练目标的新变化第22-25章素材" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>研究范围：MoE架构、Multi-token Prediction、长上下文预训练、多模态预训练的并入<br />
+研究时间：2025年<br />
+搜索次数：12次独立搜索</p>
+</blockquote>
+<hr />
+<h2 id="第22章moe从稠密模型到稀疏激活模型">第22章：MoE从稠密模型到稀疏激活模型<a class="headerlink" href="#第22章moe从稠密模型到稀疏激活模型" title="Permanent link">&para;</a></h2>
+<h3 id="221-moe架构的起源与发展脉络">22.1 MoE架构的起源与发展脉络<a class="headerlink" href="#221-moe架构的起源与发展脉络" title="Permanent link">&para;</a></h3>
+<p>Mixture-of-Experts (MoE)架构的核心思想是通过稀疏激活机制，在不显著增加计算成本的前提下大幅扩展模型参数量。MoE的概念最早可以追溯到1990年代(Jacobs et al., 1991)，但直到2017年Shazeer等人将其应用于NLP领域，MoE才真正展现出规模化潜力 [<sup>259</sup>]。</p>
+<p><strong>关键发展里程碑：</strong><br />
+- <strong>2017年</strong>：Shazeer et al. 提出稀疏门控MoE层(Sparsely-Gated MoE)，使用Top-K门控机制选择专家 [<sup>257</sup>]<br />
+- <strong>2020年6月</strong>：Google发布GShard，将MoE应用于Transformer模型，用MoE层替换T5的FFN层，训练了从12.5B到600B参数的一系列模型 [<sup>261</sup>]<br />
+- <strong>2021年</strong>：Lepikhin et al. 提出GShard的Top-2路由策略，配合辅助负载均衡损失 [<sup>259</sup>]<br />
+- <strong>2022年</strong>：Fedus et al. 提出Switch Transformer，简化路由策略为Top-1，将模型参数规模推至1.6万亿 [<sup>261</sup>]<br />
+- <strong>2022年</strong>：ST-MoE模型发布，对MoE结构和训练策略进行更深入分析 [<sup>261</sup>]<br />
+- <strong>2024年</strong>：DeepSeekMoE引入细粒度专家分割和共享专家隔离，重新思考MoE设计 [<sup>293</sup>]<br />
+- <strong>2024年</strong>：Mixtral 8x7B成为首个广受欢迎的开源MoE模型 [<sup>348</sup>]</p>
+<h3 id="222-switch-transformer极简路由的探索">22.2 Switch Transformer：极简路由的探索<a class="headerlink" href="#222-switch-transformer极简路由的探索" title="Permanent link">&para;</a></h3>
+<p>Switch Transformer (Fedus et al., 2022) 的核心创新在于将路由策略简化为<strong>每个token只路由到一个专家(Top-1)</strong>，相比GShard的Top-2策略进一步降低了计算和通信成本 [<sup>258</sup>]。</p>
+<p><strong>Switch Transformer的关键设计：</strong><br />
+- 路由概率通过softmax计算：<code>p_i = exp(r_i) / sum(exp(r_j))</code><br />
+- 只选择概率最高的单个专家<br />
+- 输出通过路由概率加权：<code>y = p_i * E_i(o)</code> [<sup>258</sup>]<br />
+- 引入辅助负载均衡损失来鼓励专家间负载均衡：<code>L_b = n * sum(s_i * P_i)</code>，其中<code>s_i</code>是分配给专家i的样本比例，<code>P_i</code>是分配给专家i的路由概率比例 [<sup>258</sup>]</p>
+<p>Switch Transformer成功将MoE模型扩展到1.6万亿参数，展示了MoE架构的极强可扩展性 [<sup>261</sup>]。</p>
+<h3 id="223-gshard分布式moe训练的工程突破">22.3 GShard：分布式MoE训练的工程突破<a class="headerlink" href="#223-gshard分布式moe训练的工程突破" title="Permanent link">&para;</a></h3>
+<p>GShard (Lepikhin et al., 2020) 采用<strong>Top-2路由策略</strong>，但引入了<strong>专家容量约束</strong>：超出每个专家token配额的token将被丢弃 [<sup>257</sup>]。</p>
+<p><strong>GShard的关键机制：</strong><br />
+- Top-2路由：每个token选择2个专家处理<br />
+- 容量因子(Capacity Factor)：控制每个专家可处理的token数量<br />
+- Token丢弃：超出容量的token被丢弃，依赖残差连接恢复<br />
+- 专家并行(Expert Parallelism, EP)：将不同专家分布在不同GPU上 [<sup>351</sup>]</p>
+<p><strong>专家容量计算公式：</strong> <code>expert_capacity = (num_tokens / num_experts) * capacity_factor</code> [<sup>380</sup>]</p>
+<p>MegaBlocks框架通过块稀疏操作实现了&rdquo;无丢弃MoE&rdquo;(dropless MoE)，避免了token丢弃对模型质量的影响，在MoE训练上实现了高达40%的端到端加速 [<sup>380</sup>]。</p>
+<h3 id="224-st-moe稳定性与训练策略的深入分析">22.4 ST-MoE：稳定性与训练策略的深入分析<a class="headerlink" href="#224-st-moe稳定性与训练策略的深入分析" title="Permanent link">&para;</a></h3>
+<p>ST-MoE (Zoph et al., 2022) 对MoE架构和训练策略进行了更深入的分析，引入了<strong>Router z-loss</strong>来控制路由logits的幅度，提升训练稳定性 [<sup>339</sup>]。</p>
+<p><strong>ST-MoE的核心贡献：</strong><br />
+- 深入分析了MoE结构设计和训练策略<br />
+- 引入router z-loss稳定训练<br />
+- 分析了不同路由策略的优劣</p>
+<h3 id="225-路由负载均衡与训练稳定性问题">22.5 路由、负载均衡与训练稳定性问题<a class="headerlink" href="#225-路由负载均衡与训练稳定性问题" title="Permanent link">&para;</a></h3>
+<p>MoE训练面临的核心挑战之一是<strong>专家崩溃(Expert Collapse)</strong>：部分专家被过度使用而另一些专家几乎不被激活 [<sup>257</sup>]。</p>
+<p><strong>负载均衡解决方案的演进：</strong></p>
+<ol type="1">
+<li><strong>辅助损失法(GShard/Switch Transformer)</strong>：通过额外的负载均衡损失项惩罚不平衡分配 [<sup>354</sup>]</li>
+</ol>
+<ul>
+<li>公式：<code>L_Balance = alpha * sum(f_i * P_i)</code></li>
+<li>局限：辅助损失的梯度可能干扰主任务损失，存在权衡困境 [<sup>354</sup>]</li>
+</ul>
+<ol start="2" type="1">
+<li><strong>无辅助损失法(DeepSeek-V3)</strong>：通过偏置更新替代辅助损失</li>
+</ol>
+<ul>
+<li>DeepSeek-V3开创了无辅助损失的负载均衡策略，最小化负载均衡对模型性能的不利影响 [<sup>267</sup>]</li>
+<li>基于观测到的专家负载动态更新偏置项 [<sup>339</sup>]</li>
+</ul>
+<ol start="3" type="1">
+<li><strong>专家选择路由(Expert Choice Routing)</strong>：由专家选择token而非token选择专家</li>
+</ol>
+<ul>
+<li>每个专家选择top-k token [<sup>262</sup>]</li>
+<li>确保负载均匀，训练收敛速度提升超过2倍 [<sup>262</sup>]</li>
+</ul>
+<ol start="4" type="1">
+<li><strong>Router z-loss</strong>：控制路由logits幅度</li>
+</ol>
+<ul>
+<li>防止路由概率过度尖锐化 [<sup>339</sup>]</li>
+<li>对训练稳定性至关重要</li>
+</ul>
+<p><strong>训练不稳定性来源：</strong><br />
+- 路由分布的训练-推理不一致 [<sup>357</sup>]<br />
+- 专家选择的随机性导致策略差异<br />
+- MoE模型在RL训练中更容易出现灾难性崩溃 [<sup>357</sup>]</p>
+<h3 id="226-deepseekmoe工程化创新的典范">22.6 DeepSeekMoE：工程化创新的典范<a class="headerlink" href="#226-deepseekmoe工程化创新的典范" title="Permanent link">&para;</a></h3>
+<p>DeepSeekMoE是2024年最重要的MoE架构创新之一，其核心设计目标是实现<strong>极致的专家专业化</strong> [<sup>293</sup>]。</p>
+<p><strong>两大核心策略：</strong></p>
+<ol type="1">
+<li><strong>细粒度专家分割(Fine-Grained Expert Segmentation)</strong>：</li>
+</ol>
+<ul>
+<li>将专家的FFN中间隐藏维度分割为更小的粒度</li>
+<li>在保持参数总量不变的情况下，激活更多细粒度专家</li>
+<li>允许更灵活、更适应性的专家组合 [<sup>282</sup>]</li>
+</ul>
+<ol start="2" type="1">
+<li><strong>共享专家隔离(Shared Expert Isolation)</strong>：</li>
+</ol>
+<ul>
+<li>隔离某些专家作为始终激活的共享专家</li>
+<li>捕获和整合跨上下文的共同知识</li>
+<li>减少路由专家间的冗余 [<sup>282</sup>]</li>
+</ul>
+<p><strong>DeepSeekMoE架构公式：</strong><br />
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>h&#39;_t = u_t + sum(FFN_i^(s)(u_t)) + sum(g_{i,t} * FFN_i^(r)(u_t))
+</span></code></pre></div><br />
+其中<code>u_t</code>是第t个token的输入，<code>N_s</code>是共享专家数，<code>N_r</code>是路由专家数，<code>g_{i,t}</code>是路由门控值 [<sup>284</sup>]。</p>
+<p><strong>DeepSeekMoE的卓越性能：</strong><br />
+- DeepSeekMoE 2B性能接近2.9B的GShard（专家参数和计算量仅为1.5倍）[<sup>293</sup>]<br />
+- DeepSeekMoE 16B仅用约40%的计算量达到与LLaMA2 7B相当的性能 [<sup>293</sup>]<br />
+- DeepSeekMoE 145B仅用28.5%的计算量达到与DeepSeek 67B相当的性能 [<sup>282</sup>]</p>
+<h3 id="227-mixtral-8x7b开源moe的里程碑">22.7 Mixtral 8x7B：开源MoE的里程碑<a class="headerlink" href="#227-mixtral-8x7b开源moe的里程碑" title="Permanent link">&para;</a></h3>
+<p>Mixtral 8x7B (Jiang et al., 2024) 是首个广受欢迎的开源MoE模型，采用<strong>Top-2路由</strong>，每个token在每个层选择2个专家 [<sup>348</sup>]。</p>
+<p><strong>Mixtral架构特点：</strong><br />
+- 32层Transformer，每层8个专家<br />
+- 每个token激活2个专家<br />
+- 总参数47B，激活参数仅13B [<sup>348</sup>]<br />
+- 上下文长度32K tokens [<sup>266</sup>]<br />
+- 性能匹配或超过LLaMA 2 70B [<sup>348</sup>]</p>
+<p><strong>Mixtral vs Switch Transformer对比：</strong> [<sup>349</sup>]</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>Switch Transformer</th>
+<th>Mixtral 8x7B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>每层专家数</td>
+<td>2,048</td>
+<td>8</td>
+</tr>
+<tr>
+<td>激活专家数</td>
+<td>1 (Top-1)</td>
+<td>2 (Top-2)</td>
+</tr>
+<tr>
+<td>专家大小</td>
+<td>小(容量因子)</td>
+<td>大(7B规模FFN)</td>
+</tr>
+<tr>
+<td>负载均衡</td>
+<td>显式辅助损失</td>
+<td>训练时使用推理时不使用</td>
+</tr>
+<tr>
+<td>总参数</td>
+<td>高达1.6T</td>
+<td>46.7B</td>
+</tr>
+<tr>
+<td>激活参数</td>
+<td>~1B</td>
+<td>12.9B</td>
+</tr>
+<tr>
+<td>主要目标</td>
+<td>最大稀疏度</td>
+<td>质量-效率平衡</td>
+</tr>
+</tbody>
+</table>
+<h3 id="228-moe训练的关键工程挑战">22.8 MoE训练的关键工程挑战<a class="headerlink" href="#228-moe训练的关键工程挑战" title="Permanent link">&para;</a></h3>
+<p><strong>1. 专家并行与通信开销：</strong><br />
+- MoE层需要在GPU间进行all-to-all通信传输token [<sup>343</sup>]<br />
+- 负载不均衡导致同步延迟，快的GPU等待慢的GPU [<sup>343</sup>]</p>
+<p><strong>2. 推理优化：</strong><br />
+- ReMoE通过仅微调路由器的门控参数实现内存受限MoE推理的专家重用 [<sup>339</sup>]<br />
+- 推理时的负载均衡对延迟至关重要</p>
+<p><strong>3. 训练-推理不一致性：</strong><br />
+- 路由分布在训练和推理阶段存在差异<br />
+- Rollout Routing Replay (R3) 方法记录推理阶段的路由分布并在训练中回放，显著降低KL散度 [<sup>357</sup>]</p>
+<hr />
+<h2 id="第23章multi-token-prediction">第23章：Multi-token Prediction<a class="headerlink" href="#第23章multi-token-prediction" title="Permanent link">&para;</a></h2>
+<h3 id="231-从单token预测到多token预测的范式转变">23.1 从单token预测到多token预测的范式转变<a class="headerlink" href="#231-从单token预测到多token预测的范式转变" title="Permanent link">&para;</a></h3>
+<p>传统LLM预训练采用<strong>next-token prediction (NTP)</strong>目标函数，即给定前文预测下一个token。Multi-token Prediction (MTP) 则要求模型同时预测多个未来token [<sup>390</sup>]。</p>
+<p><strong>核心动机：</strong><br />
+- NTP过于关注局部模式，忽略&rdquo;困难&rdquo;决策 [<sup>391</sup>]<br />
+- NTP导致teacher forcing与推理阶段的暴露偏差 [<sup>388</sup>]<br />
+- MTP通过联合预测多步，鼓励模型捕获更长程依赖和全局结构 [<sup>388</sup>]<br />
+- MTP提供更密集的训练信号，改善数据效率 [<sup>267</sup>]</p>
+<h3 id="232-meta的multi-token-prediction工作">23.2 Meta的Multi-token Prediction工作<a class="headerlink" href="#232-meta的multi-token-prediction工作" title="Permanent link">&para;</a></h3>
+<p>Gloeckle et al. (2024) 在Meta发表了里程碑论文&rdquo;Better &amp; Faster Large Language Models via Multi-token Prediction&rdquo; [<sup>390</sup>]。</p>
+<p><strong>核心方法：</strong><br />
+- 在共享模型主干上附加n个独立输出头<br />
+- 每个输出头预测一个未来token<br />
+- 训练时并行计算所有预测头的损失<br />
+- <strong>无额外训练时间或内存开销</strong> [<sup>391</sup>]</p>
+<p><strong>关键实验结果：</strong> [<sup>390</sup>]<br />
+- 13B参数模型在HumanEval上比NTP基线多解决12%的问题<br />
+- 在MBPP上多解决17%的问题<br />
+- 对代码生成任务的提升尤为显著<br />
+- 使用4-token预测训练的模型推理速度提升高达3倍<br />
+- 模型规模越大，MTP收益越明显</p>
+<p><strong>理论分析：</strong> MTP有利于归纳头(induction heads)和算法推理能力的发展 [<sup>391</sup>]</p>
+<h3 id="233-deepseek-v3的mtp实现">23.3 DeepSeek-V3的MTP实现<a class="headerlink" href="#233-deepseek-v3的mtp实现" title="Permanent link">&para;</a></h3>
+<p>DeepSeek-V3采用了独特的<strong>序列化MTP实现</strong>，与Gloeckle et al.的并行预测不同 [<sup>360</sup>]。</p>
+<p><strong>DeepSeek-V3 MTP架构：</strong> [<sup>360</sup>]</p>
+<ol type="1">
+<li><strong>序列化预测模块</strong>：使用D个序列模块预测D个额外token</li>
+<li><strong>保持完整因果链</strong>：每个预测深度保持完整因果链</li>
+<li><strong>共享参数</strong>：嵌入层和输出头与主模型共享</li>
+</ol>
+<p><strong>MTP模块实现细节：</strong><br />
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>h&#39;^k_i = M_k[RMSNorm(h^{k-1}_i); RMSNorm(Emb(t_{i+k}))]
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>h^k_{1:T-k} = TRM_k(h&#39;^k_{1:T-k})
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>P^k_{i+k+1} = OutHead(h^k_i)
+</span></code></pre></div></p>
+<p>其中<code>h^{k-1}_i</code>是第(k-1)深度的表示，<code>Emb(t_{i+k})</code>是第(i+k)个token的嵌入，<code>M_k</code>是投影矩阵，<code>TRM_k</code>是Transformer块 [<sup>360</sup>]。</p>
+<p><strong>训练目标：</strong><br />
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>L_MTP = (lambda/D) * sum(L_MTP^k)
+</span></code></pre></div></p>
+<p><strong>DeepSeek-V3 MTP配置：</strong><br />
+- MTP深度D=1（除下一个token外，每个token预测一个额外token）[<sup>360</sup>]<br />
+- 推理时可以丢弃MTP模块，主模型独立运行<br />
+- MTP模块可重新用于推测解码(speculative decoding)加速推理<br />
+- 第二个token预测的接受率在85%-90%之间 [<sup>360</sup>]<br />
+- 实现1.8倍TPS（每秒token数）提升 [<sup>360</sup>]</p>
+<h3 id="234-mtp与推理加速">23.4 MTP与推理加速<a class="headerlink" href="#234-mtp与推理加速" title="Permanent link">&para;</a></h3>
+<p>MTP天然支持<strong>推测解码(Speculative Decoding)</strong>，这是一种无损的推理加速技术 [<sup>294</sup>]。</p>
+<p><strong>推测解码原理：</strong><br />
+- 使用小模型（草稿模型）预测多个后续token<br />
+- 目标LLM并行验证所有候选token<br />
+- 接受最长的正确前缀并继续<br />
+- 输出分布与仅运行目标模型完全相同 [<sup>294</sup>]</p>
+<p><strong>MTP加速推理的实现方式：</strong><br />
+1. <strong>自推测解码(Self-Speculative Decoding)</strong>：MTP训练的模型可直接使用其辅助预测头作为草稿模型 [<sup>391</sup>]<br />
+2. <strong>Medusa框架</strong>：为LLM附加额外解码头，并行预测多个后续token [<sup>389</sup>]<br />
+3. <strong>EAGLE</strong>：利用MTP模块实现高效推测 [<sup>360</sup>]</p>
+<p><strong>实际加速效果：</strong><br />
+- MTP训练的模型推理速度提升高达3倍，即使在大batch size下 [<sup>390</sup>]<br />
+- DeepSeek-V3实现1.8倍TPS提升 [<sup>360</sup>]<br />
+- 聊天和摘要工作负载通常加速2-3倍<br />
+- 长文本生成任务可加速3-5倍 [<sup>294</sup>]</p>
+<h3 id="235-mtp的变体与改进">23.5 MTP的变体与改进<a class="headerlink" href="#235-mtp的变体与改进" title="Permanent link">&para;</a></h3>
+<p><strong>Token Order Prediction (TOP)</strong>：<br />
+- 将精确未来token预测的困难任务替换为对即将出现的token按接近程度排序<br />
+- 仅需MTP多个Transformer层的一个额外unembedding层<br />
+- 在340M、1.8B和7B参数规模的实验中，TOP整体优于NTP和MTP [<sup>254</sup>]</p>
+<p><strong>高效训练无关MTP (ESP)</strong>：<br />
+- 在嵌入空间中直接合成mask token以引出多token分布<br />
+- 无需训练辅助头或修改模型权重<br />
+- 即插即用，适用于计算受限环境 [<sup>251</sup>]</p>
+<p><strong>多步预测在特定领域的应用：</strong><br />
+- <strong>语音建模</strong>：LLM-Codec引入Future Token Prediction (FTP)，预测多个未来语音token [<sup>250</sup>]<br />
+- <strong>视觉规划</strong>：MTP应用于基于图的路径规划任务 [<sup>388</sup>]<br />
+- <strong>视觉语言模型</strong>：ViSpec将MTP应用于VLM推测解码 [<sup>286</sup>]</p>
+<h3 id="236-mtp的广泛采用">23.6 MTP的广泛采用<a class="headerlink" href="#236-mtp的广泛采用" title="Permanent link">&para;</a></h3>
+<p><strong>采用MTP的模型列表（2024-2025）：</strong><br />
+- DeepSeek-V3 (MTP深度=1) [<sup>267</sup>]<br />
+- MiniCPM4 [<sup>255</sup>]<br />
+- Qwen3-Next [<sup>370</sup>]<br />
+- Nemotron 3 Super [<sup>370</sup>]<br />
+- MiMo (Xiaomi) [<sup>264</sup>]<br />
+- GLM-4.5 [<sup>290</sup>]</p>
+<hr />
+<h2 id="第24章长上下文预训练">第24章：长上下文预训练<a class="headerlink" href="#第24章长上下文预训练" title="Permanent link">&para;</a></h2>
+<h3 id="241-长上下文的重要性与挑战">24.1 长上下文的重要性与挑战<a class="headerlink" href="#241-长上下文的重要性与挑战" title="Permanent link">&para;</a></h3>
+<p>长上下文能力对现代LLM至关重要：<br />
+- 多文档问答 [<sup>275</sup>]<br />
+- 代码库级别代码理解 [<sup>275</sup>]<br />
+- 多轮对话保持连贯性<br />
+- Agent任务需要处理大量历史信息<br />
+- Many-shot上下文学习 [<sup>275</sup>]</p>
+<p><strong>技术挑战：</strong><br />
+1. <strong>注意力复杂度</strong>：自注意力计算复杂度随序列长度平方增长 O(n^2)<br />
+2. <strong>GPU内存消耗</strong>：长上下文训练内存需求剧增 [<sup>275</sup>]<br />
+3. <strong>位置编码外推</strong>：训练长度外的新位置是分布外(OOD)的<br />
+4. <strong>高质量长文本数据稀缺</strong> [<sup>353</sup>]<br />
+5. <strong>BFloat16精度问题</strong>：在长上下文训练中破坏RoPE [<sup>275</sup>]</p>
+<h3 id="242-位置编码扩展技术">24.2 位置编码扩展技术<a class="headerlink" href="#242-位置编码扩展技术" title="Permanent link">&para;</a></h3>
+<p>RoPE (Rotary Position Embedding) 已成为位置编码的主导方案 [<sup>275</sup>]。为扩展上下文长度，研究者提出了多种RoPE扩展方法。</p>
+<p><strong>Position Interpolation (PI)</strong>：<br />
+- 直接对位置编码进行插值<br />
+- 将超过上下文窗口的长文本位置缩放到原始窗口大小<br />
+- 计算：<code>A_ij = q_i^T * R_{(j-i)/s} * k_j</code><br />
+- 缺点：压缩了邻近token的距离，可能降低性能 [<sup>265</sup>]</p>
+<p><strong>NTK-aware Interpolation</strong>：<br />
+- 通过调整RoPE的旋转速度来扩展上下文窗口<br />
+- 减少基频(b)实现，而不是统一缩放<br />
+- 高频率插值少，低频率插值多<br />
+- 非微调模型表现远好于PI [<sup>265</sup>]</p>
+<p><strong>NTK-by-parts Interpolation</strong>：<br />
+- 引入比率<code>r(d) = L / lambda_d</code>衡量RoPE维度在给定上下文长度下的旋转次数<br />
+- 使用斜坡函数gamma&reg;区分不同插值策略<br />
+- 波长远小于上下文大小时不插值，大于等于时只插值 [<sup>265</sup>]</p>
+<p><strong>YaRN (Yet another RoPE extensioN)</strong>：<br />
+- 在NTK-by-parts基础上引入注意力温度缩放<br />
+- 修改注意力权重计算：<code>softmax(q_m^T * k_n / (t * sqrt|D|))</code><br />
+- 可以通过&rdquo;长度缩放&rdquo;技巧修改旋转位置嵌入实现<br />
+- 零推理和训练开销 [<sup>265</sup>]<br />
+- YaRN在未见过的更长上下文上泛化更好 [<sup>275</sup>]</p>
+<p><strong>LongRoPE</strong>：<br />
+- 首次将预训练LLM的上下文窗口扩展到2048K(200万)tokens [<sup>392</sup>]<br />
+- 仅需最多1K微调步骤，在256K训练长度内完成<br />
+- 三大创新：<br />
+  1. 识别并利用位置插值的非均匀性，提供更好微调初始化<br />
+  2. 渐进式扩展策略：先微调256K，再二次插值到2048K<br />
+  3. 在8K长度上重新调整LongRoPE以恢复短上下文性能 [<sup>392</sup>]</p>
+<h3 id="243-从短上下文到长上下文的扩展策略">24.3 从短上下文到长上下文的扩展策略<a class="headerlink" href="#243-从短上下文到长上下文的扩展策略" title="Permanent link">&para;</a></h3>
+<p><strong>标准扩展流程（业界实践）：</strong> [<sup>353</sup>]<br />
+1. <strong>短上下文预训练</strong>：在通用数据集上以短上下文长度(如8K)预训练<br />
+2. <strong>上下文扩展微调</strong>：在长序列数据集上微调以扩展上下文长度<br />
+3. <strong>多阶段扩展</strong>：为达到极长上下文(如1M)，通常分为多个阶段逐步扩展 [<sup>353</sup>]</p>
+<p><strong>RoPE基值选择策略：</strong> [<sup>275</sup>]<br />
+- 32K上下文：rope_theta = 1M<br />
+- 64K上下文：rope_theta = 5M<br />
+- 128K上下文：rope_theta = 10M<br />
+- 256K上下文：rope_theta = 50M</p>
+<p><strong>不同RoPE扩展方法的性能对比：</strong> [<sup>272</sup>]<br />
+- NTK可从4K外推到128K<br />
+- PI和YaRN可外推到62K<br />
+- 在训练上下文长度内评估时，适当基值的原始RoPE表现最佳<br />
+- 超出训练长度时，YaRN泛化更好</p>
+<p><strong>BFloat16与长上下文训练的冲突：</strong><br />
+- BFloat16的精度问题在长上下文训练中破坏RoPE [<sup>275</sup>]<br />
+- 需要仔细处理数值稳定性</p>
+<h3 id="244-长上下文数据工程">24.4 长上下文数据工程<a class="headerlink" href="#244-长上下文数据工程" title="Permanent link">&para;</a></h3>
+<p><strong>数据构造策略：</strong> [<sup>353</sup>]<br />
+- 预训练阶段：使用DCLM等经过过滤的数据集，丢弃短于训练上下文长度的文档<br />
+- 扩展阶段：使用Books等高质量长文本数据集<br />
+- 大多数超过128K的DCLM序列质量较低，需要精心筛选 [<sup>353</sup>]</p>
+<p><strong>Fu et al. (2024) 的128K上下文数据工程研究：</strong><br />
+- 系统性研究了扩展到128K上下文的数据工程策略<br />
+- 强调数据质量比数量更重要<br />
+- 长文本数据的多样性和领域覆盖至关重要 [<sup>382</sup>]</p>
+<h3 id="245-长上下文评估">24.5 长上下文评估<a class="headerlink" href="#245-长上下文评估" title="Permanent link">&para;</a></h3>
+<p><strong>Needle-in-a-Haystack测试：</strong><br />
+- 将特定信息(针)隐藏在长文本(草堆)中<br />
+- 测试模型从长文本中检索关键信息的能力 [<sup>270</sup>]<br />
+- 是诊断长上下文能力的标准测试</p>
+<p><strong>长上下文基准测试：</strong><br />
+- <strong>RULER</strong>：评估不同长度(4K到128K)的模型性能 [<sup>275</sup>]<br />
+- <strong>LongBench</strong>：多任务长上下文理解基准 [<sup>270</sup>]<br />
+- <strong>Video Haystack</strong>：跨模态的长视频信息检索 [<sup>291</sup>]</p>
+<p><strong>Gemini 1.5 Pro的长上下文表现：</strong> [<sup>291</sup>]<br />
+- 在200K tokens上达到100% recall<br />
+- 在530K tokens上保持100% recall<br />
+- 在1M tokens上达到99.7% recall<br />
+- 在10M tokens上保持99.2% recall<br />
+- 在10.5小时视频中成功检索隐藏帧<br />
+- 在107小时音频中成功检索隐藏片段</p>
+<h3 id="246-高效长上下文技术">24.6 高效长上下文技术<a class="headerlink" href="#246-高效长上下文技术" title="Permanent link">&para;</a></h3>
+<p><strong>并行上下文编码(CEPE)：</strong><br />
+- 使用编码器-解码器架构处理长上下文<br />
+- 编码器处理长上下文，解码器使用交叉注意力访问 [<sup>268</sup>]<br />
+- 仅需2K tokens在decoder中，其余在encoder中处理</p>
+<p><strong>KV Cache压缩：</strong><br />
+- 基于层不确定性动态压缩KV Cache [<sup>270</sup>]<br />
+- 在Needle-in-a-Haystack和LongBench上验证<br />
+- 平均Cache预算128-2048即可保持性能</p>
+<hr />
+<h2 id="第25章多模态预训练的并入">第25章：多模态预训练的并入<a class="headerlink" href="#第25章多模态预训练的并入" title="Permanent link">&para;</a></h2>
+<h3 id="251-从文本到多模态的扩展范式">25.1 从文本到多模态的扩展范式<a class="headerlink" href="#251-从文本到多模态的扩展范式" title="Permanent link">&para;</a></h3>
+<p>多模态预训练主要有两大技术路线 [<sup>347</sup>]：</p>
+<p><strong>1. 图像标题对齐(Alignment using Image Captions)：</strong><br />
+- 将预训练LLM与CLIP等图像编码器结合<br />
+- 通过两阶段训练：先用图像标题对齐，再用VQA等数据微调<br />
+- 代表模型：LLaVA-1.5, ShareGPT4V [<sup>347</sup>]</p>
+<p><strong>2. 交错图文多模态预训练(Multimodal Pretraining using Interleaved Image-Text)：</strong><br />
+- 使用交错的图文网页文档进行预训练<br />
+- 在文本next-token prediction中融入视觉上下文<br />
+- 代表模型：Kosmos-1, IDEFICS2, Flamingo [<sup>347</sup>]</p>
+<h3 id="252-组合式多模态模型llava范式">25.2 组合式多模态模型：LLaVA范式<a class="headerlink" href="#252-组合式多模态模型llava范式" title="Permanent link">&para;</a></h3>
+<p>LLaVA (Liu et al., 2024) 及其后续版本代表了<strong>组合式多模态模型</strong>的主流范式。</p>
+<p><strong>LLaVA架构组件：</strong> [<sup>264</sup>]<br />
+1. <strong>视觉编码器</strong>：CLIP-ViT将图像编码为patch嵌入<br />
+2. <strong>投影层</strong>：轻量级线性或MLP模块，对齐视觉特征与语言模型token空间<br />
+3. <strong>语言模型</strong>：处理文本生成和推理</p>
+<p><strong>训练流程（以LLaVA-1.5为例）：</strong> [<sup>271</sup>]<br />
+1. <strong>阶段1（预训练）</strong>：冻结视觉编码器和LLM，只训练投影层进行视觉-语言对齐<br />
+2. <strong>阶段2（视觉指令微调）</strong>：在高质量指令跟随数据上端到端微调</p>
+<p><strong>LLaVA-1.5的关键发现：</strong> [<sup>271</sup>]<br />
+- 使用最简单架构在学术计算和公开数据集上达到最佳整体性能<br />
+- 视觉指令微调在提升LMM能力中起重要作用<br />
+- 对&rdquo;LMM需要大量视觉-语言对齐预训练&rdquo;的普遍认知提出质疑<br />
+- LLaVA-1.5 (7B) 超越80B参数的IDEFICS</p>
+<p><strong>LLaVA-OneVision的进展：</strong> [<sup>279</sup>]<br />
+- 统一单图、多图和视频任务的训练<br />
+- 引入分辨率感知学习和高分辨率指令微调<br />
+- 三阶段训练：语言-图像对齐、高质量知识学习、视觉指令微调</p>
+<h3 id="253-原生多模态模型chameleon与gemini范式">25.3 原生多模态模型：Chameleon与Gemini范式<a class="headerlink" href="#253-原生多模态模型chameleon与gemini范式" title="Permanent link">&para;</a></h3>
+<p><strong>原生多模态模型</strong>直接在统一架构上训练多模态数据，不依赖冻结的文本LLM。</p>
+<p><strong>Chameleon (Meta)：</strong> [<sup>350</sup>]<br />
+- 早期融合(early-fusion)的基于token的架构<br />
+- 图像被量化为离散视觉token（8192个条目的码本）<br />
+- 统一Transformer处理同时包含图像和文本token的序列<br />
+- 在文本、图像和交错图文数据混合上预训练<br />
+- 使用QK-Norm和修订的Layer Normalization放置来稳定训练</p>
+<p><strong>统一解码器训练的优势：</strong> [<sup>352</sup>]<br />
+- 多模态序列在训练期间流经LLM的全部容量<br />
+- 视觉token不是分布外的（像adapter方式那样）<br />
+- 更容易扩展到新的模态</p>
+<p><strong>Gemini系列：</strong> [<sup>289</sup>]<br />
+- Gemini 1.5 Pro基于MoE架构<br />
+- 原生多模态，支持音频、视觉、文本和代码输入的交错<br />
+- 上下文窗口从32K扩展到1000万tokens<br />
+- 在几乎不降低性能的情况下处理极大输入</p>
+<p><strong>GPT-4o (OpenAI)：</strong> [<sup>358</sup>]<br />
+- 自回归omni架构<br />
+- 端到端训练，整合文本、视觉和音频<br />
+- 所有模态由统一神经网络处理</p>
+<h3 id="254-原生多模态-vs-组合式关键对比">25.4 原生多模态 vs 组合式：关键对比<a class="headerlink" href="#254-原生多模态-vs-组合式关键对比" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>组合式 (LLaVA范式)</th>
+<th>原生多模态 (Gemini/GPT-4o)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>架构</td>
+<td>视觉编码器 + 投影层 + 冻结/微调LLM</td>
+<td>统一Transformer处理所有模态</td>
+</tr>
+<tr>
+<td>训练方式</td>
+<td>文本LLM预训练 + 多模态微调</td>
+<td>多模态数据从头联合训练</td>
+</tr>
+<tr>
+<td>模态融合</td>
+<td>晚期融合(通过投影)</td>
+<td>早期融合(统一token空间)</td>
+</tr>
+<tr>
+<td>视觉表示</td>
+<td>连续特征(CLIP)</td>
+<td>离散token(Chameleon)或连续特征</td>
+</tr>
+<tr>
+<td>优势</td>
+<td>利用强文本LLM，训练成本低</td>
+<td>模态间真正深度融合</td>
+</tr>
+<tr>
+<td>劣势</td>
+<td>视觉token对LLM是分布外的</td>
+<td>训练成本高，架构复杂</td>
+</tr>
+<tr>
+<td>代表模型</td>
+<td>LLaVA, Qwen2.5-VL</td>
+<td>GPT-4o, Gemini, Chameleon</td>
+</tr>
+</tbody>
+</table>
+<h3 id="255-多模态token与文本token的对齐问题">25.5 多模态Token与文本Token的对齐问题<a class="headerlink" href="#255-多模态token与文本token的对齐问题" title="Permanent link">&para;</a></h3>
+<p><strong>对齐策略演进：</strong> [<sup>269</sup>]</p>
+<ol type="1">
+<li><strong>预训练阶段对齐</strong>：</li>
+</ol>
+<ul>
+<li>增强视觉分支的语义信息</li>
+<li>引入适配器模块（零初始化注意力、Perceiver架构）</li>
+<li>改进特征空间对齐（线性投影、Q-Former）</li>
+<li>引入额外任务（视觉生成、像素级生成目标）</li>
+</ul>
+<ol start="2" type="1">
+<li><strong>SFT阶段对齐</strong>：</li>
+</ol>
+<ul>
+<li>开发高质量微调指令集</li>
+<li>视觉接地对话</li>
+<li>多语言多模态指令微调</li>
+</ul>
+<p><strong>Qwen2.5-VL的动态视觉token化：</strong> [<sup>279</sup>]<br />
+- 引入动态视觉token化<br />
+- 多模态旋转位置编码<br />
+- 图像和视频token在任意分辨率下保持空间和时间定位</p>
+<p><strong>高分辨率处理策略：</strong> [<sup>279</sup>]<br />
+- LLaVA-UHD、LLaVA-OneVision、Oryx、InternVL 2.5使用AnyRes风格切片<br />
+- 空间模式或按需压缩保留高分辨率细节<br />
+- Q-Zoom等查询感知方法根据用户指令决定分辨率</p>
+<h3 id="256-deepseek-vl2moe-meets多模态">25.6 DeepSeek-VL2：MoE meets多模态<a class="headerlink" href="#256-deepseek-vl2moe-meets多模态" title="Permanent link">&para;</a></h3>
+<p>DeepSeek-VL2将MoE架构应用于多模态预训练： [<sup>288</sup>]<br />
+- 使用SigLIP-SO400M-384作为视觉编码器<br />
+- 使用DeepSeekMoE作为语言模型<br />
+- 两层MLP作为视觉-语言适配器<br />
+- 在交错图文、图像标题、OCR、VQA等数据上预训练<br />
+- 27B模型增加全局偏置项的专家偏置校正步骤</p>
+<h3 id="257-多模态模型的scaling-law">25.7 多模态模型的Scaling Law<a class="headerlink" href="#257-多模态模型的scaling-law" title="Permanent link">&para;</a></h3>
+<p><strong>Qwen2-VL的Scaling Law探索：</strong> [<sup>292</sup>]<br />
+- 通过缩放模型规模(2B, 8B, 72B参数)和训练数据规模<br />
+- 验证视觉语言模型的scaling规律<br />
+- 支持任意分辨率输入</p>
+<p><strong>多模态Scaling Law是新兴研究方向：</strong><br />
+- 视觉-语言模型的计算最优训练策略<br />
+- 数据混合比例对多模态能力的影响<br />
+- 不同模态之间的scaling关系</p>
+<h3 id="258-多模态预训练的技术挑战">25.8 多模态预训练的技术挑战<a class="headerlink" href="#258-多模态预训练的技术挑战" title="Permanent link">&para;</a></h3>
+<p><strong>1. 序列膨胀(Sequence Explosion)：</strong> [<sup>279</sup>]<br />
+- 高分辨率图像产生大量视觉token<br />
+- 视频帧数增加导致序列长度急剧增长</p>
+<p><strong>2. 模态间不平衡：</strong><br />
+- 文本数据量远大于其他模态<br />
+- 训练信号不均衡</p>
+<p><strong>3. 模态干扰(Modality Interference)：</strong><br />
+- 多模态联合训练可能导致某些模态性能下降<br />
+- 需要精心设计的数据混合策略</p>
+<p><strong>4. 推理效率：</strong><br />
+- 视觉token增加推理计算和内存开销<br />
+- 需要视觉token压缩和动态分辨率技术</p>
+<hr />
+<h2 id="重要论文和来源">重要论文和来源<a class="headerlink" href="#重要论文和来源" title="Permanent link">&para;</a></h2>
+<h3 id="moe架构">MoE架构<a class="headerlink" href="#moe架构" title="Permanent link">&para;</a></h3>
+<ol type="1">
+<li><strong>Shazeer et al. (2017)</strong> &ldquo;Outrageously Large Neural Networks&rdquo; - 稀疏门控MoE开创性工作</li>
+<li><strong>Lepikhin et al. (2020)</strong> &ldquo;GShard: Scaling Giant Models with Conditional Computation&rdquo; - 分布式MoE训练</li>
+<li><strong>Fedus et al. (2022)</strong> &ldquo;Switch Transformers: Scaling to Trillion Parameter Models&rdquo; - Switch Transformer</li>
+<li><strong>Zoph et al. (2022)</strong> &ldquo;ST-MoE: Designing Stable and Transferable Sparse Expert Models&rdquo; - ST-MoE</li>
+<li><strong>Dai et al. (2024)</strong> &ldquo;DeepSeekMoE: Towards Ultimate Expert Specialization&rdquo; - DeepSeekMoE [<sup>293</sup>]</li>
+<li><strong>Jiang et al. (2024)</strong> &ldquo;Mixtral of Experts&rdquo; - Mixtral 8x7B [<sup>348</sup>]</li>
+<li><strong>Zhou et al. (2022)</strong> &ldquo;Mixture-of-Experts with Expert Choice Routing&rdquo; - 专家选择路由 [<sup>262</sup>]</li>
+<li><strong>Wang et al. (2024)</strong> &ldquo;Auxiliary-Loss-Free Load Balancing Strategy for Mixture-of-Experts&rdquo; - 无辅助损失负载均衡</li>
+</ol>
+<h3 id="multi-token-prediction">Multi-token Prediction<a class="headerlink" href="#multi-token-prediction" title="Permanent link">&para;</a></h3>
+<ol start="9" type="1">
+<li><strong>Gloeckle et al. (2024)</strong> &ldquo;Better &amp; Faster Large Language Models via Multi-token Prediction&rdquo; - MTP奠基性工作 [<sup>390</sup>]</li>
+<li><strong>DeepSeek-AI (2024)</strong> &ldquo;DeepSeek-V3 Technical Report&rdquo; - DeepSeek-V3的MTP实现 [<sup>360</sup>]</li>
+<li><strong>Cai et al. (2024)</strong> &ldquo;Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads&rdquo; - 推测解码框架</li>
+<li><strong>Qi et al. (2020)</strong> &ldquo;ProphetNet: Predicting Future N-gram for Sequence-to-Sequence Pre-training&rdquo; - 早期多token预测</li>
+</ol>
+<h3 id="长上下文">长上下文<a class="headerlink" href="#长上下文" title="Permanent link">&para;</a></h3>
+<ol start="13" type="1">
+<li><strong>Su et al. (2021)</strong> &ldquo;RoFormer: Enhanced Transformer with Rotary Position Embedding&rdquo; - RoPE</li>
+<li><strong>Peng et al. (2023)</strong> &ldquo;YaRN: Efficient Context Window Extension of Large Language Models&rdquo; - YaRN [<sup>265</sup>]</li>
+<li><strong>Ding et al. (2024)</strong> &ldquo;LongRoPE: Extending LLM Context Window Beyond 2 Million Tokens&rdquo; - LongRoPE [<sup>392</sup>]</li>
+<li><strong>Fu et al. (2024)</strong> &ldquo;Data Engineering for Scaling Language Models to 128K Context&rdquo; - 长上下文数据工程</li>
+<li><strong>Gemini Team (2024)</strong> &ldquo;Gemini 1.5: Unlocking multimodal understanding across millions of tokens&rdquo; - Gemini 1.5 Pro [<sup>289</sup>]</li>
+<li><strong>Chen et al. (2023)</strong> &ldquo;Extending Context Window of Large Language Models via Positional Interpolation&rdquo; - PI</li>
+</ol>
+<h3 id="多模态预训练">多模态预训练<a class="headerlink" href="#多模态预训练" title="Permanent link">&para;</a></h3>
+<ol start="19" type="1">
+<li><strong>Liu et al. (2024)</strong> &ldquo;Improved Baselines with Visual Instruction Tuning (LLaVA-1.5)&rdquo; - LLaVA-1.5 [<sup>271</sup>]</li>
+<li><strong>Li et al. (2024)</strong> &ldquo;LLaVA-OneVision: Easy Visual Task Transfer&rdquo; - LLaVA-OneVision</li>
+<li><strong>Team et al. (2024)</strong> &ldquo;Gemini 1.5 Technical Report&rdquo; - Gemini 1.5 [<sup>289</sup>]</li>
+<li><strong>Alayrac et al. (2022)</strong> &ldquo;Flamingo: a Visual Language Model for Few-Shot Learning&rdquo; - Flamingo</li>
+<li><strong>Lu et al. (2024)</strong> &ldquo;Chameleon: Mixed-Modal Early-Fusion Foundation Models&rdquo; - Chameleon</li>
+<li><strong>Bai et al. (2025)</strong> &ldquo;Qwen2.5-VL Technical Report&rdquo; - Qwen2.5-VL</li>
+</ol>
+<hr />
+<h2 id="趋势和信号">趋势和信号<a class="headerlink" href="#趋势和信号" title="Permanent link">&para;</a></h2>
+<ol type="1">
+<li>
+<p><strong>MoE成为主流架构选择</strong>：2024年1-5月发布的超100B参数MoE模型数量超过此前三年总和 [<sup>261</sup>]。DeepSeek-V3、Qwen-MoE、Kimi-VL等均采用MoE。</p>
+</li>
+<li>
+<p><strong>无辅助损失负载均衡成为趋势</strong>：DeepSeek-V3开创的无辅助损失策略正在被更多模型采用，减少负载均衡对主任务性能的干扰 [<sup>267</sup>]。</p>
+</li>
+<li>
+<p><strong>Multi-token Prediction从训练技巧变为标准配置</strong>：2024年后MTP从研究兴趣转变为多个主流模型的标准训练目标（DeepSeek-V3、MiniCPM4、Qwen3等）。</p>
+</li>
+<li>
+<p><strong>长上下文成为标配</strong>：从2023年的4K-32K扩展到2024年的128K-1M+，长上下文能力快速普及。上下文长度不再是瓶颈，草堆中的针(Needle-in-Haystack)测试已接近饱和。</p>
+</li>
+<li>
+<p><strong>原生多模态成为顶级模型的共同选择</strong>：GPT-4o、Gemini 1.5 Pro、Chameleon均采用原生多模态架构。组合式方法（LLaVA范式）在开源社区更流行。</p>
+</li>
+<li>
+<p><strong>MoE + 多模态的交叉</strong>：DeepSeek-VL2、Kimi-VL等将MoE架构应用于多模态模型，利用稀疏激活平衡多模态计算成本。</p>
+</li>
+<li>
+<p><strong>多模态Scaling Law成为新前沿</strong>：视觉-语言模型的最优训练策略、数据混合比例等Scaling问题成为新兴研究方向。</p>
+</li>
+</ol>
+<hr />
+<h2 id="争议和冲突观点">争议和冲突观点<a class="headerlink" href="#争议和冲突观点" title="Permanent link">&para;</a></h2>
+<ol type="1">
+<li><strong>负载均衡：辅助损失 vs 无辅助损失</strong></li>
+</ol>
+<ul>
+<li>辅助损失派(GShard/Switch)：显式惩罚不均衡分配，简单有效但可能干扰主任务 [<sup>354</sup>]</li>
+<li>无辅助损失派(DeepSeek-V3)：通过偏置更新实现负载均衡，声称对性能影响更小 [<sup>267</sup>]</li>
+<li><strong>争议点</strong>：无辅助损失是否在大规模训练中保持稳定性仍需更多验证</li>
+</ul>
+<ol start="2" type="1">
+<li><strong>Top-1 vs Top-2路由</strong></li>
+</ol>
+<ul>
+<li>Switch Transformer的Top-1路由更简单高效，但可能丢失信息</li>
+<li>Mixtral的Top-2路由通过加权两个专家的输出获得更好的质量-效率平衡 [<sup>349</sup>]</li>
+<li><strong>争议点</strong>：最优的K值是多少？是否随模型规模变化？</li>
+</ul>
+<ol start="3" type="1">
+<li><strong>MTP是否真的提升&rdquo;理解&rdquo;能力</strong></li>
+</ol>
+<ul>
+<li>支持者认为MTP鼓励更长程规划和全局表示 [<sup>388</sup>]</li>
+<li>批评者认为MTP可能只是提供了更密集的训练信号，而非真正的规划能力</li>
+<li><strong>争议点</strong>：MTP带来的性能提升是来自更好的表示学习还是更多监督信号？</li>
+</ul>
+<ol start="4" type="1">
+<li><strong>原生多模态 vs 组合式多模态</strong></li>
+</ol>
+<ul>
+<li>原生多模态支持者认为真正的模态融合需要联合预训练 [<sup>352</sup>]</li>
+<li>组合式支持者(LLaVA)认为利用强文本LLM + 轻量对齐足够好，且成本更低 [<sup>271</sup>]</li>
+<li><strong>争议点</strong>：LLaVA-1.5在学术计算和公开数据集上超越了80B的IDEFICS，挑战了&rdquo;需要大规模多模态预训练&rdquo;的假设 [<sup>271</sup>]</li>
+</ul>
+<ol start="5" type="1">
+<li><strong>长上下文：微调扩展 vs 从头预训练</strong></li>
+</ol>
+<ul>
+<li>微调扩展派：先在短上下文预训练，再逐步扩展到长上下文 [<sup>353</sup>]</li>
+<li>从头预训练派：认为长上下文能力需要从头培养</li>
+<li><strong>争议点</strong>：微调扩展是否真的能获得与从头预训练相当的长上下文理解能力？</li>
+</ul>
+<hr />
+<h2 id="建议深入研究的领域">建议深入研究的领域<a class="headerlink" href="#建议深入研究的领域" title="Permanent link">&para;</a></h2>
+<ol type="1">
+<li><strong>MoE架构的最优设计空间</strong></li>
+</ol>
+<ul>
+<li>专家数量、专家大小、激活数量(K值)的最优组合</li>
+<li>不同任务类型对MoE设计的影响</li>
+<li>MoE的Scaling Law：总参数量 vs 激活参数量 vs 计算效率</li>
+</ul>
+<ol start="2" type="1">
+<li><strong>MTP的理论理解</strong></li>
+</ol>
+<ul>
+<li>MTP为何在代码任务上提升最大？</li>
+<li>MTP深度(D)的最优选择与模型规模的关系</li>
+<li>MTP与归纳推理能力的理论联系</li>
+</ul>
+<ol start="3" type="1">
+<li><strong>极长上下文(&gt;1M)的技术挑战</strong></li>
+</ol>
+<ul>
+<li>注意力机制的亚二次替代方案（线性注意力、状态空间模型）</li>
+<li>1000万+上下文的有效利用（模型是否能真正理解如此长的依赖？）</li>
+<li>长上下文的计算效率优化</li>
+</ul>
+<ol start="4" type="1">
+<li><strong>多模态预训练的Scaling Law</strong></li>
+</ol>
+<ul>
+<li>不同模态数据的最优混合比例</li>
+<li>视觉token压缩与信息保留的权衡</li>
+<li>模态间能力迁移的规律</li>
+</ul>
+<ol start="5" type="1">
+<li><strong>MoE + 多模态的交叉研究</strong></li>
+</ol>
+<ul>
+<li>模态特定的路由策略（如Ming-Omni的模态特定路由头）[<sup>345</sup>]</li>
+<li>多模态MoE的负载均衡特殊挑战</li>
+<li>MoE在多模态推理中的效率优化</li>
+</ul>
+<ol start="6" type="1">
+<li><strong>Router设计的新方向</strong></li>
+</ol>
+<ul>
+<li>确定性路由(Hash-based) vs 可学习路由</li>
+<li>层级路由和嵌套MoE</li>
+<li>动态专家数量（根据输入复杂度调整）</li>
+</ul>
+<ol start="7" type="1">
+<li><strong>长上下文评估的新基准</strong></li>
+</ol>
+<ul>
+<li>Needle-in-Haystack测试已接近饱和</li>
+<li>需要更复杂的长上下文理解和推理基准</li>
+<li>多模态长上下文评估（长视频、长音频）</li>
+</ul>
+<hr />
+<h2 id="参考文献索引">参考文献索引<a class="headerlink" href="#参考文献索引" title="Permanent link">&para;</a></h2>
+<ul>
+<li>[<sup>257</sup>] Stable-MoE: Lyapunov-based Token Routing</li>
+<li>[<sup>258</sup>] SpeechMoE: Dynamic Routing Mixture of Experts</li>
+<li>[<sup>259</sup>] Optimizing MoE Routers: Design, Implementation, and Evaluation</li>
+<li>[<sup>260</sup>] MoE Architecture Review</li>
+<li>[<sup>261</sup>] Mixture of Experts (MoE): A Big Data Perspective</li>
+<li>[<sup>262</sup>] Mixture-of-Experts with Expert Choice Routing</li>
+<li>[<sup>264</sup>] A Survey on Parallel Text Generation</li>
+<li>[<sup>265</sup>] YaRN: Efficient Context Window Extension</li>
+<li>[<sup>266</sup>] Safety-Oriented Routing Analysis of Mixtral MoE</li>
+<li>[<sup>267</sup>] DeepSeek-V3 Technical Report</li>
+<li>[<sup>268</sup>] Long-Context Language Modeling with Parallel Context Encoding</li>
+<li>[<sup>269</sup>] Establishing Equivalence Between Image and Text Token</li>
+<li>[<sup>270</sup>] Dynamic KV Cache Compression for Long-context Modeling</li>
+<li>[<sup>271</sup>] LLaVA-1.5: Improved Baselines with Visual Instruction Tuning</li>
+<li>[<sup>272</sup>] Understanding the RoPE Extensions of Long-Context LLMs</li>
+<li>[<sup>275</sup>] BFloat16 Breaks Down RoPE in Long-Context Training</li>
+<li>[<sup>279</sup>] Toward Native Multimodal Modeling: A Roadmap</li>
+<li>[<sup>280</sup>] Hacking Hallucinations of MLLMs</li>
+<li>[<sup>282</sup>] DeepSeekMoE Technical Report</li>
+<li>[<sup>284</sup>] DeepSeek Model Architecture Review</li>
+<li>[<sup>285</sup>] MoE Experimental Study</li>
+<li>[<sup>286</sup>] ViSpec: Vision-Aware Speculative Decoding</li>
+<li>[<sup>288</sup>] DeepSeekVL2 Technical Report</li>
+<li>[<sup>289</sup>] Gemini 1.5 Technical Report</li>
+<li>[<sup>290</sup>] FastMTP: Accelerating LLM Inference</li>
+<li>[<sup>291</sup>] Gemini 1.5 Evaluation Results</li>
+<li>[<sup>292</sup>] Variation-aware Vision Token Dropping</li>
+<li>[<sup>293</sup>] DeepSeekMoE: Towards Ultimate Expert Specialization</li>
+<li>[<sup>294</sup>] Speculative Decoding Guide</li>
+<li>[<sup>339</sup>] ReMoE: Router Fine-Tuning for MoE Inference</li>
+<li>[<sup>343</sup>] ReaLB: Real-Time Load Balancing for Multimodal MoE</li>
+<li>[<sup>345</sup>] MoE-based MLLMs with Modality-Specific Routing</li>
+<li>[<sup>346</sup>] Counterfactual Routing Analysis in MoE</li>
+<li>[<sup>348</sup>] Mixtral of Experts Paper</li>
+<li>[<sup>349</sup>] Mixtral 8x7B Architecture Analysis</li>
+<li>[<sup>350</sup>] Chameleon: Early-Fusion Multimodal AI</li>
+<li>[<sup>351</sup>] MoE Implementation Overview (Chinese)</li>
+<li>[<sup>352</sup>] The Unified Multimodal Stack</li>
+<li>[<sup>353</sup>] End-to-End Test-Time Training for Long Context</li>
+<li>[<sup>354</sup>] BMoE: Equitable Load Balancing in MoE</li>
+<li>[<sup>357</sup>] Stabilizing MoE Reinforcement Learning</li>
+<li>[<sup>360</sup>] DeepSeek-V3 MTP Implementation Details</li>
+<li>[<sup>370</sup>] Multi-Token Prediction Architecture Gallery</li>
+<li>[<sup>377</sup>] A Localized LLM Watermark</li>
+<li>[<sup>380</sup>] MegaBlocks: Efficient Sparse Training with MoE</li>
+<li>[<sup>388</sup>] Understanding MTP Planning Capability</li>
+<li>[<sup>390</sup>] Better &amp; Faster LLMs via Multi-token Prediction (Meta)</li>
+<li>[<sup>391</sup>] Multi-token Prediction Paper Details</li>
+<li>[<sup>392</sup>] LongRoPE: Extending LLM Context Beyond 2M Tokens</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.select", "content.tooltips"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.60a45f97.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  <script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(() => { lightbox.reload() });
+</script></body>
+</html>

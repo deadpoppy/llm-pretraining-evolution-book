@@ -1,0 +1,2255 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="从 Scaling Law 到数据配方与分布式训练">
+      
+      
+      
+        <link rel="canonical" href="https://deadpoppy.github.io/llm-pretraining-evolution-book/chapters/llm_pretraining_sec11/">
+      
+      
+        <link rel="prev" href="../llm_pretraining_sec10/">
+      
+      
+        <link rel="next" href="../llm_pretraining_sec12/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.50">
+    
+    
+      
+        <title>第11章 Chinchilla Scaling Law - 大语言模型预训练技术演进</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.a40c8224.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+SC:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Noto Sans SC";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/book.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+   <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
+    html.glightbox-open { overflow: initial; height: 100%; }
+    .gslide-title { margin-top: 0px; user-select: text; }
+    .gslide-desc { color: #666; user-select: text; }
+    .gslide-image img { background: white; }
+    .gscrollbar-fixer { padding-right: 15px; }
+    .gdesc-inner { font-size: 0.75rem; }
+    body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
+    body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
+    body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}</style> <script src="../../assets/javascripts/glightbox.min.js"></script></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#第11章-2022chinchilla-scaling-law-与数据比参数更重要" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="大语言模型预训练技术演进" class="md-header__button md-logo" aria-label="大语言模型预训练技术演进" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            大语言模型预训练技术演进
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              第11章 Chinchilla Scaling Law
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="teal"  aria-label="切换到深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="teal"  aria-label="切换到浅色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/deadpoppy/llm-pretraining-evolution-book" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    deadpoppy/llm-pretraining-evolution-book
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../llm_pretraining_sec00/" class="md-tabs__link">
+          
+  
+    
+  
+  正文
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../full-book/" class="md-tabs__link">
+          
+  
+    
+  
+  附录
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../research/llm_pretraining_wide01/" class="md-tabs__link">
+          
+  
+    
+  
+  研究材料
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="大语言模型预训练技术演进" class="md-nav__button md-logo" aria-label="大语言模型预训练技术演进" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    大语言模型预训练技术演进
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/deadpoppy/llm-pretraining-evolution-book" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    deadpoppy/llm-pretraining-evolution-book
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    首页
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    正文
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            正文
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec00/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    导读
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec01/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第1章 预训练的前史
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec02/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第2章 Transformer 改变底层结构
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec03/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第3章 GPT 路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec04/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第4章 BERT 路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec05/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第5章 T5、BART 与统一文本到文本
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec06/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第6章 Tokenizer 的核心问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec07/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第7章 BPE 到 Byte-level Tokenizer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec08/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第8章 Tokenizer 的新问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec09/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第9章 Scaling Law 的提出
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec10/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第10章 GPT-3 与大模型涌现
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    第11章 Chinchilla Scaling Law
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    第11章 Chinchilla Scaling Law
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#111-为什么很多早期大模型其实是训练不充分的" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.1 为什么很多早期大模型其实是&rdquo;训练不充分&rdquo;的
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11.1 为什么很多早期大模型其实是”训练不充分”的">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1111-kaplan的误导n--c073过度强调参数低估数据" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.1.1 Kaplan的误导：N ∝ C^0.73，过度强调参数、低估数据
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1112-gpt-3175b参数300b-tokens的严重undertrained" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.1.2 GPT-3（175B参数、300B tokens）的严重undertrained
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1113-gopher280b参数300b-tokens等类似问题" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.1.3 Gopher（280B参数、300B tokens）等类似问题
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#112-compute-optimal给定算力下如何分配参数和token" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.2 Compute-optimal：给定算力下如何分配参数和Token
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11.2 Compute-optimal：给定算力下如何分配参数和Token">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1121-hoffmann-et-al2022的重新实验" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.2.1 Hoffmann et al.（2022）的重新实验
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1122-chinchilla最优比例d--20--n" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.2.2 Chinchilla最优比例：D* ≈ 20 × N
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1123-chinchilla70b14t击败gopher280b300b" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.2.3 Chinchilla（70B、1.4T）击败Gopher（280B、300B）
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1124-表格对比kaplan-vs-chinchilla" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.2.4 表格对比：Kaplan vs Chinchilla
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#113-从更大参数转向更多高质量token" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.3 从&rdquo;更大参数&rdquo;转向&rdquo;更多高质量Token&rdquo;
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11.3 从”更大参数”转向”更多高质量Token”">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1131-llama-1的转变" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.3.1 LLaMA-1的转变
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1132-推理成本的权衡" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.3.2 推理成本的权衡
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1133-小而多数据成为共识" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.3.3 &ldquo;小而多数据&rdquo;成为共识
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#114-chinchilla对后续开源模型训练配方的影响" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.4 Chinchilla对后续开源模型训练配方的影响
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11.4 Chinchilla对后续开源模型训练配方的影响">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1141-llama系列数据量增长" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.4.1 LLaMA系列数据量增长
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1142-过训练趋势" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.4.2 过训练趋势
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1143-表格对比主要模型参数数据比例与chinchilla偏离度" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.4.3 表格对比：主要模型参数/数据比例与Chinchilla偏离度
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec12/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第12章 Scaling Law 的新阶段
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec13/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第13章 预训练数据的基本构成
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec14/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第14章 大规模语料堆叠阶段
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec15/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第15章 数据配比成为核心技术
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec16/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第16章 数据配比的新趋势
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec17/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第17章 分布式训练的基本矛盾
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec18/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第18章 并行训练的三大路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec19/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第19章 3D 并行与千卡训练
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec20/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第20章 长上下文与高效 Attention
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec21/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第21章 新一代训练系统趋势
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec22/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第22章 MoE 稀疏激活模型
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec23/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第23章 Multi-token Prediction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec24/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第24章 长上下文预训练
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec25/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第25章 多模态预训练的并入
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec26/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第26章 Llama 3 训练配方
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec27/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第27章 DeepSeek-V3 代表案例
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec28/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第28章 Qwen3 与多语言开源模型
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec29/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第29章 推理模型的反向影响
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec30/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第30章 2026 之后的关键问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec31/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    结语
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    附录
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            附录
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../full-book/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    完整书稿
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../outline/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    章节大纲
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plan/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    写作计划
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    研究材料
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            研究材料
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide01/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 01
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide02/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 02
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide03/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 03
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide04/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 04
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide05/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 05
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide06/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 06
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide07/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 07
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide08/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 08
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#111-为什么很多早期大模型其实是训练不充分的" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.1 为什么很多早期大模型其实是&rdquo;训练不充分&rdquo;的
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11.1 为什么很多早期大模型其实是”训练不充分”的">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1111-kaplan的误导n--c073过度强调参数低估数据" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.1.1 Kaplan的误导：N ∝ C^0.73，过度强调参数、低估数据
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1112-gpt-3175b参数300b-tokens的严重undertrained" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.1.2 GPT-3（175B参数、300B tokens）的严重undertrained
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1113-gopher280b参数300b-tokens等类似问题" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.1.3 Gopher（280B参数、300B tokens）等类似问题
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#112-compute-optimal给定算力下如何分配参数和token" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.2 Compute-optimal：给定算力下如何分配参数和Token
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11.2 Compute-optimal：给定算力下如何分配参数和Token">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1121-hoffmann-et-al2022的重新实验" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.2.1 Hoffmann et al.（2022）的重新实验
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1122-chinchilla最优比例d--20--n" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.2.2 Chinchilla最优比例：D* ≈ 20 × N
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1123-chinchilla70b14t击败gopher280b300b" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.2.3 Chinchilla（70B、1.4T）击败Gopher（280B、300B）
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1124-表格对比kaplan-vs-chinchilla" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.2.4 表格对比：Kaplan vs Chinchilla
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#113-从更大参数转向更多高质量token" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.3 从&rdquo;更大参数&rdquo;转向&rdquo;更多高质量Token&rdquo;
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11.3 从”更大参数”转向”更多高质量Token”">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1131-llama-1的转变" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.3.1 LLaMA-1的转变
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1132-推理成本的权衡" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.3.2 推理成本的权衡
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1133-小而多数据成为共识" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.3.3 &ldquo;小而多数据&rdquo;成为共识
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#114-chinchilla对后续开源模型训练配方的影响" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.4 Chinchilla对后续开源模型训练配方的影响
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11.4 Chinchilla对后续开源模型训练配方的影响">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1141-llama系列数据量增长" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.4.1 LLaMA系列数据量增长
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1142-过训练趋势" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.4.2 过训练趋势
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1143-表格对比主要模型参数数据比例与chinchilla偏离度" class="md-nav__link">
+    <span class="md-ellipsis">
+      11.4.3 表格对比：主要模型参数/数据比例与Chinchilla偏离度
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="第11章-2022chinchilla-scaling-law-与数据比参数更重要">第11章 2022：Chinchilla Scaling Law 与&rdquo;数据比参数更重要&rdquo;<a class="headerlink" href="#第11章-2022chinchilla-scaling-law-与数据比参数更重要" title="Permanent link">&para;</a></h1>
+<p>GPT-3证明了&rdquo;大参数&rdquo;路线的威力。但在2022年，DeepMind的一支研究团队提出了一个反直觉的结论：GPT-3以及同时代的所有大模型，实际上都训练错了——它们的参数规模相对数据量而言过大，每个参数摄入的token数量严重不足。Jordan Hoffmann等人通过更严格的实验，推翻了两年前的Kaplan Scaling Law，重新定义了&rdquo;计算最优训练&rdquo;的含义。</p>
+<h2 id="111-为什么很多早期大模型其实是训练不充分的">11.1 为什么很多早期大模型其实是&rdquo;训练不充分&rdquo;的<a class="headerlink" href="#111-为什么很多早期大模型其实是训练不充分的" title="Permanent link">&para;</a></h2>
+<h3 id="1111-kaplan的误导n--c073过度强调参数低估数据">11.1.1 Kaplan的误导：N ∝ C^0.73，过度强调参数、低估数据<a class="headerlink" href="#1111-kaplan的误导n--c073过度强调参数低估数据" title="Permanent link">&para;</a></h3>
+<p>Kaplan et al.（2020）的核心结论可以用一句话概括：给定更多算力，应该主要用来扩大模型参数，而非增加数据。具体来说，Kaplan推荐的计算最优分配为 N_optimal ∝ C^0.73 和 D_optimal ∝ C^0.27 [<sup>111</sup>][<sup>109</sup>]。这意味着计算预算每增加10倍，参数应扩大约10^0.73 ≈ 5.4倍，数据量仅需增加约10^0.27 ≈ 1.9倍。参数增长比数据快近3倍。</p>
+<p>这个结论源于三个方法论缺陷 [<sup>111</sup>]：</p>
+<p>第一，Kaplan只计数非嵌入参数（non-embedding parameters），忽略了词嵌入和位置嵌入层。在小规模模型中，嵌入层占总参数的很大一部分，忽略它们会系统性偏倚标度系数。Pearce et al.（2024）的调和研究确认，这是Kaplan与Chinchilla结论差异的主要来源 [<sup>111</sup>]。</p>
+<p>第二，Kaplan的实验规模有限。拟合标度曲线时使用的最大模型仅约1B参数。从1B外推到100B+参数区间，外推误差被放大 [<sup>109</sup>]。</p>
+<p>第三，超参数调优不充分。Kaplan使用了固定长度的warmup期，对小模型而言过长；学习率调度也未针对每个模型规模单独优化 [<sup>111</sup>]。</p>
+<p>这三个缺陷叠加在一起，导致Kaplan系统性高估了参数的重要性、低估了数据的重要性。</p>
+<h3 id="1112-gpt-3175b参数300b-tokens的严重undertrained">11.1.2 GPT-3（175B参数、300B tokens）的严重undertrained<a class="headerlink" href="#1112-gpt-3175b参数300b-tokens的严重undertrained" title="Permanent link">&para;</a></h3>
+<p>按Kaplan的框架，GPT-3（175B参数、300B tokens）是一次合理的计算最优训练。但Chinchilla的透镜揭示了完全不同的事实。</p>
+<p>GPT-3的D/N比率（每个参数对应的训练token数）为 300B / 175B ≈ <strong>1.7</strong> [<sup>109</sup>]。Chinchilla框架下，175B参数的计算最优数据量应为 175B × 20 = <strong>3.5T tokens</strong>——这是GPT-3实际训练数据量的11.7倍。换言之，GPT-3实际摄入的数据仅达到其&rdquo;应有&rdquo;水平的约8.5%。</p>
+<p>另一种等价的视角：给定300B tokens的预算，Chinchilla框架推荐的计算最优参数规模约为300B / 20 = <strong>15B</strong> [<sup>109</sup>]。GPT-3的参数规模是其最优值的11.7倍。两种解读指向同一个结论：GPT-3的训练严重不足。</p>
+<p>这不是一个理论上的吹毛求疵。Chinchilla实验表明，一个&rdquo;正确训练&rdquo;的小模型可以系统性地击败一个&rdquo;训练不足&rdquo;的大模型。</p>
+<h3 id="1113-gopher280b参数300b-tokens等类似问题">11.1.3 Gopher（280B参数、300B tokens）等类似问题<a class="headerlink" href="#1113-gopher280b参数300b-tokens等类似问题" title="Permanent link">&para;</a></h3>
+<p>Gopher的情况更为极端。DeepMind自己训练的Gopher拥有280B参数，却只在300B tokens上训练 [<sup>72</sup>]，D/N比率约为<strong>1.07</strong>——每个参数只看了一个token略多。</p>
+<p>同期其他大模型同样陷入这个陷阱：</p>
+<ul>
+<li>Jurassic-1：178B参数 / 300B tokens，D/N ≈ 1.7</li>
+<li>Megatron-Turing NLG：530B参数 / 270B tokens，D/N ≈ 0.51</li>
+</ul>
+<p>这些模型遵循的是同一套逻辑：Kaplan说参数更重要，所以把参数做大。它们共享同一个假设：数据量不需要与参数规模同步增长。Chinchilla证明这个假设是错误的。</p>
+<h2 id="112-compute-optimal给定算力下如何分配参数和token">11.2 Compute-optimal：给定算力下如何分配参数和Token<a class="headerlink" href="#112-compute-optimal给定算力下如何分配参数和token" title="Permanent link">&para;</a></h2>
+<h3 id="1121-hoffmann-et-al2022的重新实验">11.2.1 Hoffmann et al.（2022）的重新实验<a class="headerlink" href="#1121-hoffmann-et-al2022的重新实验" title="Permanent link">&para;</a></h3>
+<p>Hoffmann等人来自DeepMind的团队系统性地重做了Kaplan的实验，做了三处关键改进 [<sup>65</sup>]。</p>
+<p>第一，计数<strong>总参数</strong>（包括嵌入层），而非仅非嵌入参数 [<sup>111</sup>]。这让标度系数回归物理直觉。</p>
+<p>第二，使用最大16B参数的模型进行拟合，比Kaplan的1B上限提高了16倍。更大的拟合范围降低了外推的不确定性。</p>
+<p>第三，采用正确的余弦学习率调度（cosine decay with warmup），并对每个模型规模单独调优训练步数。这消除了Kaplan实验中固定warmup期带来的系统性偏差。</p>
+<p>Hoffmann等人还引入了<strong>IsoFLOP分析</strong>方法：在固定总计算量（FLOPs）的条件下，系统性地变化模型规模N和数据量D，观察哪种组合达到最低损失 [<sup>68</sup>]。这种方法直接从实验数据中确定最优分配，无需依赖外推。IsoFLOP分析的核心洞察是：对于每一个固定的计算量C，总存在一个(N, D)组合使得损失最小；将这些最优组合连起来，就能确定N和D随C增长的最佳轨迹。三种独立方法——固定模型规模变化数据量、IsoFLOP分析、以及直接求解约束优化方程——得出了高度一致的结论，增强了结果的可信度 [<sup>68</sup>]。</p>
+<h3 id="1122-chinchilla最优比例d--20--n">11.2.2 Chinchilla最优比例：D* ≈ 20 × N<a class="headerlink" href="#1122-chinchilla最优比例d--20--n" title="Permanent link">&para;</a></h3>
+<p>三种独立的分析方法——固定模型规模变化数据量、固定FLOPs变化N和D、以及直接求解约束优化方程——得出了高度一致的结论 [<sup>68</sup>]：</p>
+<p>给定计算预算C，最优分配满足 N_optimal ∝ C^0.50 和 D_optimal ∝ C^0.50 [<sup>111</sup>]。参数和数据应<strong>等比例</strong>增长，而非Kaplan建议的3:1偏向参数。</p>
+<p>这导出了一个简洁的实用规则：<strong>最优训练token数约为参数量的20倍</strong>，即 D* ≈ 20N。这个比率被称为&rdquo;Chinchilla最优比率&rdquo;，成为后续模型设计的重要参考基准 [<sup>72</sup>]。</p>
+<p>Pearce et al.（2024）的后续研究确认，当使用与Kaplan相同的非嵌入参数计数方法时，在Chinchilla的实验条件下也会产生接近Kaplan的偏倚系数 [<sup>111</sup>]。这反向验证了Chinchilla结论的稳健性：偏差主要来自参数计数方式，而非其他实验差异。</p>
+<h3 id="1123-chinchilla70b14t击败gopher280b300b">11.2.3 Chinchilla（70B、1.4T）击败Gopher（280B、300B）<a class="headerlink" href="#1123-chinchilla70b14t击败gopher280b300b" title="Permanent link">&para;</a></h3>
+<p>Chinchilla自身的实验设计就是对这一结论的最有力证明。</p>
+<p>Chinchilla模型：70B参数，1.4T tokens，D/N = 20，严格遵循Chinchilla最优比率 [<sup>72</sup>]。</p>
+<p>Gopher模型：280B参数，300B tokens，D/N ≈ 1.07，是Chinchilla时代的4倍参数规模。</p>
+<p>两者的训练计算量大致相当。但Chinchilla在几乎所有下游基准测试上都<strong>优于</strong>Gopher [<sup>72</sup>][<sup>76</sup>]。Chinchilla也超越了GPT-3（175B）、Jurassic-1（178B）和Megatron-Turing NLG（530B）[<sup>109</sup>]——后者参数规模分别是Chinchilla的2.5倍、2.5倍和7.6倍。</p>
+<p>这个结果改变了Scaling Law的语言。&rdquo;更大总是更好&rdquo;的直觉被替换为&rdquo;更平衡才是更好&rdquo;。在固定的计算预算下，盲目堆参数是低效的；把一部分参数&rdquo;预算&rdquo;转化为数据&rdquo;预算&rdquo;，可以获得更好的性能回报。</p>
+<h3 id="1124-表格对比kaplan-vs-chinchilla">11.2.4 表格对比：Kaplan vs Chinchilla<a class="headerlink" href="#1124-表格对比kaplan-vs-chinchilla" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">维度</th>
+<th style="text-align: left;">Kaplan et al. (2020)</th>
+<th style="text-align: left;">Hoffmann et al. (2022, Chinchilla)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">最优参数标度</td>
+<td style="text-align: left;">N ∝ C^0.73</td>
+<td style="text-align: left;">N ∝ C^0.50</td>
+</tr>
+<tr>
+<td style="text-align: left;">最优数据标度</td>
+<td style="text-align: left;">D ∝ C^0.27</td>
+<td style="text-align: left;">D ∝ C^0.50</td>
+</tr>
+<tr>
+<td style="text-align: left;">参数/数据增长比率</td>
+<td style="text-align: left;">参数增长快3倍</td>
+<td style="text-align: left;">等比例增长</td>
+</tr>
+<tr>
+<td style="text-align: left;">D/N 最优比率</td>
+<td style="text-align: left;">~3 tokens/参数</td>
+<td style="text-align: left;"><strong>~20 tokens/参数</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;">参数计数方式</td>
+<td style="text-align: left;">非嵌入参数</td>
+<td style="text-align: left;">总参数</td>
+</tr>
+<tr>
+<td style="text-align: left;">最大拟合模型</td>
+<td style="text-align: left;">~1B</td>
+<td style="text-align: left;">~16B</td>
+</tr>
+<tr>
+<td style="text-align: left;">学习率调度</td>
+<td style="text-align: left;">固定warmup</td>
+<td style="text-align: left;">调优余弦衰减</td>
+</tr>
+<tr>
+<td style="text-align: left;">核心结论</td>
+<td style="text-align: left;">大参数优先</td>
+<td style="text-align: left;">参数与数据并重</td>
+</tr>
+</tbody>
+</table>
+<p>表注：C为总训练计算量（FLOPs），N为参数量，D为训练token数。数据来源：Kaplan et al. [<sup>51</sup>]，Hoffmann et al. [<sup>65</sup>]，Pearce et al. [<sup>111</sup>]。</p>
+<p>上表的关键差异在第三行和第四行。Kaplan框架下，计算预算每翻一倍，大部分增量应投入参数；Chinchilla框架下，参数和数据应平分增量。D/N比率从<sub>3跃升到</sub>20，这个变化对后续模型设计的影响是结构性的——它解释了为什么2020-2021年的大模型集体&rdquo;训练不足&rdquo;。</p>
+<h2 id="113-从更大参数转向更多高质量token">11.3 从&rdquo;更大参数&rdquo;转向&rdquo;更多高质量Token&rdquo;<a class="headerlink" href="#113-从更大参数转向更多高质量token" title="Permanent link">&para;</a></h2>
+<h3 id="1131-llama-1的转变">11.3.1 LLaMA-1的转变<a class="headerlink" href="#1131-llama-1的转变" title="Permanent link">&para;</a></h3>
+<p>Chinchilla论文发表后，行业训练策略迅速转向。最具标志性的转变是Meta的LLaMA-1系列（2023年2月发布）。</p>
+<p>LLaMA-1 7B在约1T tokens上训练，D/N ≈ 143:1，远超Chinchilla最优的20:1。LLaMA-1 65B在约1.4T tokens上训练，D/N ≈ 22:1，接近Chinchilla最优 [<sup>109</sup>]。这种&rdquo;小参数+大数据&rdquo;的策略产生了令人惊讶的结果：一个7B参数的模型在多个基准上超越了参数大25倍的GPT-3（175B）。</p>
+<p>LLaMA-1向整个开源社区传递了一个信号：参数规模不再是唯一的护城河。一个精心训练的小模型可以匹敌甚至超越一个仓促训练的大模型。这一发现直接催生了后续&rdquo;小模型竞赛&rdquo;——社区不再将注意力集中在谁拥有最大的GPU集群，而是转向谁拥有最高质量的数据和最高效的训练配方。</p>
+<h3 id="1132-推理成本的权衡">11.3.2 推理成本的权衡<a class="headerlink" href="#1132-推理成本的权衡" title="Permanent link">&para;</a></h3>
+<p>&ldquo;小参数+大数据&rdquo;策略的经济逻辑不仅在于训练效率，更在于推理成本。</p>
+<p>大模型的一次性训练成本虽高，但分摊到模型生命周期中，推理成本往往占主导 [<sup>71</sup>]。一个175B参数的模型每生成一个token需要175B次浮点运算；一个7B参数的模型仅需7B次。如果后者通过更多数据训练达到了相近的能力水平，推理阶段每次查询的成本将降低约25倍。</p>
+<p>Sardana et al.（2023）将推理成本纳入计算最优配方，发现当考虑全生命周期成本时，最优模型应比标准Chinchilla推荐更小、训练更久 [<sup>115</sup>]。后续研究进一步统一了预训练和测试时计算，提出T2T（Train-to-Test）标度律，结论一致：应在预训练中考虑推理成本，用更多数据训练更小的模型 [<sup>112</sup>]。</p>
+<p>以GPT-4级别模型的实际部署为例。假设一个175B参数的稠密模型每天服务10亿次查询，每次查询平均生成500个token，一年的推理计算量约为 175B × 10^9 × 500 × 365 ≈ 3.2 × 10^22 FLOPs。相比之下，训练该模型的一次性计算量约为 6 × 175B × 1T ≈ 1.05 × 10^21 FLOPs。在模型服役一年内，推理计算量是训练计算量的约30倍。将模型缩小到7B参数（推理量减少25倍），同时用更多数据补偿性能损失，在经济上是划算的——即使训练成本增加数倍，推理阶段的节省也足以覆盖。</p>
+<h3 id="1133-小而多数据成为共识">11.3.3 &ldquo;小而多数据&rdquo;成为共识<a class="headerlink" href="#1133-小而多数据成为共识" title="Permanent link">&para;</a></h3>
+<p>到2023年底，&rdquo;小而多数据&rdquo;已成为高效模型训练的共识策略。这不仅是学术发现，更是商业决策：在推理成本占主导的商业模式中，过训练（over-training）——即D/N比率显著高于Chinchilla最优值——是全生命周期成本最优的选择。</p>
+<p>这一共识推动了数据工程的升级。数据收集、清洗、筛选和配比从&rdquo;后勤工作&rdquo;上升为模型训练的核心竞争力。模型的差异化不再仅仅来自参数规模，更来自数据质量和数据量的竞争。</p>
+<h2 id="114-chinchilla对后续开源模型训练配方的影响">11.4 Chinchilla对后续开源模型训练配方的影响<a class="headerlink" href="#114-chinchilla对后续开源模型训练配方的影响" title="Permanent link">&para;</a></h2>
+<h3 id="1141-llama系列数据量增长">11.4.1 LLaMA系列数据量增长<a class="headerlink" href="#1141-llama系列数据量增长" title="Permanent link">&para;</a></h3>
+<p>Chinchilla之后的LLaMA系列演进展示了数据规模持续扩张的趋势：</p>
+<ul>
+<li>LLaMA-1（2023年2月）：7B-65B参数，1T-1.4T tokens</li>
+<li>LLaMA-2（2023年7月）：7B-70B参数，2T tokens [<sup>109</sup>]</li>
+<li>LLaMA-3（2024年4月）：8B-70B参数，最高达15T tokens [<sup>109</sup>]</li>
+</ul>
+<p>LLaMA-3 8B在15T tokens上训练的D/N比率约为<strong>1875:1</strong>，是Chinchilla最优比率的近94倍。这标志着一个范式转变：Chinchilla定义的&rdquo;最优&rdquo;不再是目标，而是一个起点。实际训练已系统性地走向&rdquo;超训练&rdquo;（over-training）——用远超Chinchilla推荐的token数量训练相对较小的模型。</p>
+<p>Google的Gemma系列同样遵循这一趋势。Gemma-7B在6T tokens上训练，D/N ≈ 857:1 [<sup>112</sup>]；Gemma 2-9B在8T tokens上训练，D/N ≈ 889:1 [<sup>112</sup>]。这些数字都远超Chinchilla推荐的20:1。</p>
+<h3 id="1142-过训练趋势">11.4.2 过训练趋势<a class="headerlink" href="#1142-过训练趋势" title="Permanent link">&para;</a></h3>
+<p>过训练模型指D/N比率显著高于Chinchilla最优值（20:1）的模型 [<sup>79</sup>]。过训练的主要动机是<strong>推理效率</strong> [<sup>71</sup>]：更小的模型每次查询的推理成本更低，如果模型在生命周期中主要被用于推理而非重复训练，过训练在环境和经济上都有益。</p>
+<p>2026年的最新研究进一步扩展了这一分析。当考虑测试时计算（test-time compute）——如o1/o3类推理模型使用的重复采样和链式思考——时，最优模型应比标准Chinchilla推荐的&rdquo;更小且更过训练&rdquo; [<sup>112</sup>]。T2T标度律联合优化模型规模N、训练tokens D和推理采样次数k，两种独立建模方法一致得出相同结论 [<sup>112</sup>]。</p>
+<p>过训练并非没有代价。当数据总量有限时，重复训练同一数据多次会导致边际收益递减。Muennighoff et al.（2023）发现，在数据约束条件下，重复训练最多4个epoch对损失的影响可忽略不计，有意义的收益延伸到约16个epoch，约40个epoch后收益基本消失 [<sup>158</sup>][<sup>65</sup>]。</p>
+<p>这一发现构成了&rdquo;过训练上限&rdquo;的实证边界。LLaMA-3使用15T tokens训练8B参数模型（约1875:1的D/N比率），意味着数据被重复使用了约94次（假设数据总量约160T tokens中精选出15T）。但高质量数据经过去重和筛选后，实际唯一数据量可能远低于这个数字。理解重复训练的边际收益曲线，对于规划数据收集策略和设定合理的训练epoch数至关重要。</p>
+<h3 id="1143-表格对比主要模型参数数据比例与chinchilla偏离度">11.4.3 表格对比：主要模型参数/数据比例与Chinchilla偏离度<a class="headerlink" href="#1143-表格对比主要模型参数数据比例与chinchilla偏离度" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">模型</th>
+<th style="text-align: right;">参数 (B)</th>
+<th style="text-align: right;">训练Tokens (B)</th>
+<th style="text-align: right;">D/N 比率</th>
+<th style="text-align: right;">Chinchilla偏离度</th>
+<th style="text-align: left;">备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">GPT-3</td>
+<td style="text-align: right;">175</td>
+<td style="text-align: right;">300</td>
+<td style="text-align: right;">1.7</td>
+<td style="text-align: right;">-91.5%</td>
+<td style="text-align: left;">严重欠训练 [<sup>109</sup>]</td>
+</tr>
+<tr>
+<td style="text-align: left;">Gopher</td>
+<td style="text-align: right;">280</td>
+<td style="text-align: right;">300</td>
+<td style="text-align: right;">1.07</td>
+<td style="text-align: right;">-94.7%</td>
+<td style="text-align: left;">欠训练最为极端 [<sup>72</sup>]</td>
+</tr>
+<tr>
+<td style="text-align: left;">MT-NLG</td>
+<td style="text-align: right;">530</td>
+<td style="text-align: right;">270</td>
+<td style="text-align: right;">0.51</td>
+<td style="text-align: right;">-97.5%</td>
+<td style="text-align: left;">最大参数、最少数据</td>
+</tr>
+<tr>
+<td style="text-align: left;">Jurassic-1</td>
+<td style="text-align: right;">178</td>
+<td style="text-align: right;">300</td>
+<td style="text-align: right;">1.7</td>
+<td style="text-align: right;">-91.5%</td>
+<td style="text-align: left;">与GPT-3同期同策略</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Chinchilla</strong></td>
+<td style="text-align: right;"><strong>70</strong></td>
+<td style="text-align: right;"><strong>1400</strong></td>
+<td style="text-align: right;"><strong>20</strong></td>
+<td style="text-align: right;"><strong>0%</strong></td>
+<td style="text-align: left;"><strong>最优基准</strong> [<sup>72</sup>]</td>
+</tr>
+<tr>
+<td style="text-align: left;">LLaMA-1 7B</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">1000</td>
+<td style="text-align: right;">143</td>
+<td style="text-align: right;">+615%</td>
+<td style="text-align: left;">早期过训练探索</td>
+</tr>
+<tr>
+<td style="text-align: left;">LLaMA-1 65B</td>
+<td style="text-align: right;">65</td>
+<td style="text-align: right;">1400</td>
+<td style="text-align: right;">22</td>
+<td style="text-align: right;">+10%</td>
+<td style="text-align: left;">接近最优</td>
+</tr>
+<tr>
+<td style="text-align: left;">LLaMA-2 70B</td>
+<td style="text-align: right;">70</td>
+<td style="text-align: right;">2000</td>
+<td style="text-align: right;">28.6</td>
+<td style="text-align: right;">+43%</td>
+<td style="text-align: left;">适度过训练 [<sup>109</sup>]</td>
+</tr>
+<tr>
+<td style="text-align: left;">LLaMA-3 8B</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">15000</td>
+<td style="text-align: right;">1875</td>
+<td style="text-align: right;">+9275%</td>
+<td style="text-align: left;">极端过训练 [<sup>109</sup>]</td>
+</tr>
+<tr>
+<td style="text-align: left;">Gemma-7B</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">6000</td>
+<td style="text-align: right;">857</td>
+<td style="text-align: right;">+4185%</td>
+<td style="text-align: left;">推理成本驱动 [<sup>112</sup>]</td>
+</tr>
+<tr>
+<td style="text-align: left;">Gemma 2-9B</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">8000</td>
+<td style="text-align: right;">889</td>
+<td style="text-align: right;">+4345%</td>
+<td style="text-align: left;">持续过训练趋势 [<sup>112</sup>]</td>
+</tr>
+</tbody>
+</table>
+<p>表注：偏离度 = (D/N - 20) / 20 × 100%。正值为过训练，负值为欠训练。</p>
+<p>这张表格清晰呈现了2020-2024年间大模型训练策略的两次范式跃迁。第一阶段（2020-2021）是&rdquo;欠训练时代&rdquo;：GPT-3、Gopher、MT-NLG等模型D/N比率在0.5-1.7之间，远低于Chinchilla最优值。第二阶段（2022-2023）是&rdquo;Chinchilla校准时代&rdquo;：LLaMA-1 65B接近20:1的最优比率。第三阶段（2023-2024）是&rdquo;过训练时代&rdquo;：LLaMA-3、Gemma等模型的D/N比率飙升到数百乃至数千。</p>
+<p>下图以可视化方式呈现了这种转变：</p>
+<p><a class="glightbox" href="../../assets/chinchilla_comparison.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="Chinchilla时代：主要LLM的参数-数据分配" src="../../assets/chinchilla_comparison.png" /></a></p>
+<p><strong>图11-1</strong>：Chinchilla时代主要LLM的参数-数据分配。横轴为参数量（对数刻度），纵轴为训练token数（对数刻度）。虚线代表Chinchilla最优比率（D/N = 20）。2020-2021年的模型集中在图的右下区域（参数大、数据少），2022年后模型向左上方移动（参数小、数据多），反映了从&rdquo;堆参数&rdquo;到&rdquo;堆数据&rdquo;的战略转移。</p>
+<p>这两次跃迁的根本原因不同。第一次从欠训练到Chinchilla最优，是对Scaling Law理解的纠偏——Hoffmann等人证明了Kaplan框架的缺陷。第二次从Chinchilla最优到过训练，则是经济计算的结果——当推理成本成为模型全生命周期成本的主要构成时，用训练阶段的额外计算换取推理阶段的持续节省，是理性的商业选择 [<sup>112</sup>][<sup>71</sup>]。</p>
+<p>Chinchilla Scaling Law的真正遗产不在于D/N ≈ 20这个具体数字，而在于它彻底改变了模型训练的决策框架。训练不再是&rdquo;先定参数规模，再凑数据&rdquo;的单向流程；参数和数据成为两个可以独立调优的维度，其最优组合取决于计算预算、推理负载、数据可用性和商业模型。这个框架至今仍是所有大模型项目的出发点。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.select", "content.tooltips"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.60a45f97.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  <script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(() => { lightbox.reload() });
+</script></body>
+</html>

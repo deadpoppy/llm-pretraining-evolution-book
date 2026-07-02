@@ -1,0 +1,2272 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="从 Scaling Law 到数据配方与分布式训练">
+      
+      
+      
+        <link rel="canonical" href="https://deadpoppy.github.io/llm-pretraining-evolution-book/chapters/llm_pretraining_sec16/">
+      
+      
+        <link rel="prev" href="../llm_pretraining_sec15/">
+      
+      
+        <link rel="next" href="../llm_pretraining_sec17/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.50">
+    
+    
+      
+        <title>第16章 数据配比的新趋势 - 大语言模型预训练技术演进</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.a40c8224.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans+SC:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Noto Sans SC";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/book.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+   <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
+    html.glightbox-open { overflow: initial; height: 100%; }
+    .gslide-title { margin-top: 0px; user-select: text; }
+    .gslide-desc { color: #666; user-select: text; }
+    .gslide-image img { background: white; }
+    .gscrollbar-fixer { padding-right: 15px; }
+    .gdesc-inner { font-size: 0.75rem; }
+    body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
+    body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
+    body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}</style> <script src="../../assets/javascripts/glightbox.min.js"></script></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#第16章-2025-2026数据配比的新趋势" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="大语言模型预训练技术演进" class="md-header__button md-logo" aria-label="大语言模型预训练技术演进" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            大语言模型预训练技术演进
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              第16章 数据配比的新趋势
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="teal"  aria-label="切换到深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="teal"  aria-label="切换到浅色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/deadpoppy/llm-pretraining-evolution-book" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    deadpoppy/llm-pretraining-evolution-book
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../llm_pretraining_sec00/" class="md-tabs__link">
+          
+  
+    
+  
+  正文
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../full-book/" class="md-tabs__link">
+          
+  
+    
+  
+  附录
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../research/llm_pretraining_wide01/" class="md-tabs__link">
+          
+  
+    
+  
+  研究材料
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="大语言模型预训练技术演进" class="md-nav__button md-logo" aria-label="大语言模型预训练技术演进" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    大语言模型预训练技术演进
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/deadpoppy/llm-pretraining-evolution-book" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    deadpoppy/llm-pretraining-evolution-book
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    首页
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    正文
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            正文
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec00/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    导读
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec01/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第1章 预训练的前史
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec02/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第2章 Transformer 改变底层结构
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec03/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第3章 GPT 路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec04/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第4章 BERT 路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec05/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第5章 T5、BART 与统一文本到文本
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec06/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第6章 Tokenizer 的核心问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec07/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第7章 BPE 到 Byte-level Tokenizer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec08/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第8章 Tokenizer 的新问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec09/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第9章 Scaling Law 的提出
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec10/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第10章 GPT-3 与大模型涌现
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec11/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第11章 Chinchilla Scaling Law
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec12/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第12章 Scaling Law 的新阶段
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec13/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第13章 预训练数据的基本构成
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec14/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第14章 大规模语料堆叠阶段
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec15/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第15章 数据配比成为核心技术
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    第16章 数据配比的新趋势
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    第16章 数据配比的新趋势
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#161-数据重复不一定总是坏事" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.1 数据重复不一定总是坏事
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="16.1 数据重复不一定总是坏事">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1611-从去重至上到选择性重复" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.1.1 从&rdquo;去重至上&rdquo;到&rdquo;选择性重复&rdquo;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1612-重复什么比重复多少更重要" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.1.2 &ldquo;重复什么&rdquo;比&rdquo;重复多少&rdquo;更重要
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1613-多epoch训练的最佳实践" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.1.3 多epoch训练的最佳实践
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#162-稀缺领域数据与通用数据的混合策略" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.2 稀缺领域数据与通用数据的混合策略
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="16.2 稀缺领域数据与通用数据的混合策略">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1621-高质量领域数据的价值密度" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.2.1 高质量领域数据的价值密度
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1622-上采样策略稀缺数据的权重设计" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.2.2 上采样策略：稀缺数据的权重设计
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1623-动态配比的工程实践" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.2.3 动态配比的工程实践
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#163-高质量数据合成数据推理数据的权重设计" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.3 高质量数据、合成数据、推理数据的权重设计
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="16.3 高质量数据、合成数据、推理数据的权重设计">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1631-合成数据的规模化应用" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.3.1 合成数据的规模化应用
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1632-推理数据进入预训练" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.3.2 推理数据进入预训练
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1633-三类数据的配比框架" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.3.3 三类数据的配比框架
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#164-领域继续预训练如何让模型快速进入专业领域" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.4 领域继续预训练：如何让模型快速进入专业领域
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="16.4 领域继续预训练：如何让模型快速进入专业领域">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1641-d-cpt的技术路线" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.4.1 D-CPT的技术路线
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1642-通用领域混合的最优比例" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.4.2 通用+领域混合的最优比例
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1643-领域cpt的实践案例" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.4.3 领域CPT的实践案例
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#165-数据配方成为模型差异化的第一竞争力" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.5 数据配方成为模型差异化的第一竞争力
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="16.5 数据配方成为模型差异化的第一竞争力">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1651-同样架构不同数据截然不同" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.5.1 同样架构，不同数据，截然不同
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1652-数据作为核心ip" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.5.2 数据作为核心IP
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1653-数据工程地位的演进" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.5.3 数据工程地位的演进
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec17/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第17章 分布式训练的基本矛盾
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec18/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第18章 并行训练的三大路线
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec19/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第19章 3D 并行与千卡训练
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec20/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第20章 长上下文与高效 Attention
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec21/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第21章 新一代训练系统趋势
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec22/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第22章 MoE 稀疏激活模型
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec23/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第23章 Multi-token Prediction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec24/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第24章 长上下文预训练
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec25/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第25章 多模态预训练的并入
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec26/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第26章 Llama 3 训练配方
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec27/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第27章 DeepSeek-V3 代表案例
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec28/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第28章 Qwen3 与多语言开源模型
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec29/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第29章 推理模型的反向影响
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec30/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    第30章 2026 之后的关键问题
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm_pretraining_sec31/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    结语
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    附录
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            附录
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../full-book/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    完整书稿
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../outline/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    章节大纲
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plan/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    写作计划
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    研究材料
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            研究材料
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide01/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 01
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide02/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 02
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide03/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 03
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide04/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 04
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide05/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 05
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide06/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 06
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide07/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 07
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../research/llm_pretraining_wide08/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wide 08
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#161-数据重复不一定总是坏事" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.1 数据重复不一定总是坏事
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="16.1 数据重复不一定总是坏事">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1611-从去重至上到选择性重复" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.1.1 从&rdquo;去重至上&rdquo;到&rdquo;选择性重复&rdquo;
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1612-重复什么比重复多少更重要" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.1.2 &ldquo;重复什么&rdquo;比&rdquo;重复多少&rdquo;更重要
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1613-多epoch训练的最佳实践" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.1.3 多epoch训练的最佳实践
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#162-稀缺领域数据与通用数据的混合策略" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.2 稀缺领域数据与通用数据的混合策略
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="16.2 稀缺领域数据与通用数据的混合策略">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1621-高质量领域数据的价值密度" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.2.1 高质量领域数据的价值密度
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1622-上采样策略稀缺数据的权重设计" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.2.2 上采样策略：稀缺数据的权重设计
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1623-动态配比的工程实践" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.2.3 动态配比的工程实践
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#163-高质量数据合成数据推理数据的权重设计" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.3 高质量数据、合成数据、推理数据的权重设计
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="16.3 高质量数据、合成数据、推理数据的权重设计">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1631-合成数据的规模化应用" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.3.1 合成数据的规模化应用
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1632-推理数据进入预训练" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.3.2 推理数据进入预训练
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1633-三类数据的配比框架" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.3.3 三类数据的配比框架
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#164-领域继续预训练如何让模型快速进入专业领域" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.4 领域继续预训练：如何让模型快速进入专业领域
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="16.4 领域继续预训练：如何让模型快速进入专业领域">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1641-d-cpt的技术路线" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.4.1 D-CPT的技术路线
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1642-通用领域混合的最优比例" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.4.2 通用+领域混合的最优比例
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1643-领域cpt的实践案例" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.4.3 领域CPT的实践案例
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#165-数据配方成为模型差异化的第一竞争力" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.5 数据配方成为模型差异化的第一竞争力
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="16.5 数据配方成为模型差异化的第一竞争力">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1651-同样架构不同数据截然不同" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.5.1 同样架构，不同数据，截然不同
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1652-数据作为核心ip" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.5.2 数据作为核心IP
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1653-数据工程地位的演进" class="md-nav__link">
+    <span class="md-ellipsis">
+      16.5.3 数据工程地位的演进
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="第16章-2025-2026数据配比的新趋势">第16章 2025-2026：数据配比的新趋势<a class="headerlink" href="#第16章-2025-2026数据配比的新趋势" title="Permanent link">&para;</a></h1>
+<p>第15章追踪了数据配比从经验主义走向科学化的关键转折——DoReMi用小模型预测大模型的最优配比，DataComp-LM把数据筛选变成可公开比较的基准，RegMix证明回归方法仅需2%训练成本就能匹配人工调参效果。到2024年底，数据配比已确立为核心技术环节。</p>
+<p>2025-2026年，数据配比进入新阶段。五个趋势共同定义了这一时期：数据重复的价值被重新评估，稀缺领域数据的上采样策略成熟，合成数据从实验走向主流，动态在线配比取代静态预设，领域继续预训练（Domain Continual Pre-Training, CPT）成为产品化的标准手段。这些变化的底层逻辑是一致的——数据不再是静态原料，而是可被精确调控的训练变量。</p>
+<h2 id="161-数据重复不一定总是坏事">16.1 数据重复不一定总是坏事<a class="headerlink" href="#161-数据重复不一定总是坏事" title="Permanent link">&para;</a></h2>
+<h3 id="1611-从去重至上到选择性重复">16.1.1 从&rdquo;去重至上&rdquo;到&rdquo;选择性重复&rdquo;<a class="headerlink" href="#1611-从去重至上到选择性重复" title="Permanent link">&para;</a></h3>
+<p>2022-2023年的主流观点是尽可能激进地去重。SlimPajama移除了49%的内容 [<sup>6</sup>]，RefinedWeb通过MinHash激进去重证明纯web数据可以超越混合语料 [<sup>5</sup>]。当时的基本假设是：重复数据浪费计算、增加记忆化风险、损害泛化。</p>
+<p>2024-2025年的新证据推翻了这个绝对化的立场。FineWeb-Edu的发现是转折点：1.3T tokens的高质量教育数据，在固定计算量下表现优于15T tokens的原始web数据 [<sup>8</sup>]。这个对比揭示了一个关键事实——<strong>重复高质量数据比一次性消费低质量数据更有效</strong>。</p>
+<p>核心逻辑很简单。模型在每次epoch（完整遍历数据集一轮）中从数据中提取不同的学习信号。高质量数据（教育价值高、信息密度大、逻辑清晰）在多次遍历中仍能提供新的梯度信号。低质量数据即使在第一次遍历中提供的信号也弱且噪声大。</p>
+<h3 id="1612-重复什么比重复多少更重要">16.1.2 &ldquo;重复什么&rdquo;比&rdquo;重复多少&rdquo;更重要<a class="headerlink" href="#1612-重复什么比重复多少更重要" title="Permanent link">&para;</a></h3>
+<p>重复的价值高度依赖数据类型。2025年的实验证据表明 [<sup>34</sup>]：</p>
+<ul>
+<li><strong>代码数据</strong>：重复3-4次仍有正收益，代码的结构化特性使其每次遍历都能强化不同的推理路径</li>
+<li><strong>数学/STEM数据</strong>：重复2-3次收益最大，超过此阈值边际收益快速衰减</li>
+<li><strong>通用web文本</strong>：重复1-2次即可，超过后收益递减明显，因为web文本的信息密度低</li>
+<li><strong>对话/QA数据</strong>：通常不需要重复，多样性比深度更重要</li>
+</ul>
+<p><strong>教育价值</strong>（Educational Value）成为判断数据是否值得重复的核心标准。FineWeb-Edu使用Llama-3-70B标注教育价值数据来训练轻量级评分器 [<sup>8</sup>]。这个评分器不仅能过滤低质量内容，还能识别&rdquo;值得让模型多看几遍&rdquo;的高价值文本。</p>
+<h3 id="1613-多epoch训练的最佳实践">16.1.3 多epoch训练的最佳实践<a class="headerlink" href="#1613-多epoch训练的最佳实践" title="Permanent link">&para;</a></h3>
+<p>当训练数据总量受限时（领域CPT场景常见），多epoch训练不可避免。2025年的最佳实践包括 [<sup>39</sup>]：</p>
+<ol type="1">
+<li><strong>学习率衰减策略</strong>：多epoch训练需要更激进的学习率衰减，防止后期过拟合。余弦衰减的warmup比例应提高到总步数的5-10%。</li>
+<li><strong>数据shuffle质量</strong>：高质量的随机shuffle比简单重复更能保留学习信号。文档级shuffle优于文件级shuffle。</li>
+<li><strong>早停监控</strong>：监控验证集上的领域损失和通用损失，当通用损失连续上升时停止——这是灾难性遗忘的早期信号。</li>
+</ol>
+<p>LLaMA-3的退火阶段（Annealing）是这一思想的工程化体现：在40M最高质量tokens上进行多轮退火训练，使GSM8k提升24.0%，MATH提升6.4% [<sup>22</sup>]。退火本质上是&rdquo;在最后阶段只重复最好的数据&rdquo;。</p>
+<h2 id="162-稀缺领域数据与通用数据的混合策略">16.2 稀缺领域数据与通用数据的混合策略<a class="headerlink" href="#162-稀缺领域数据与通用数据的混合策略" title="Permanent link">&para;</a></h2>
+<h3 id="1621-高质量领域数据的价值密度">16.2.1 高质量领域数据的价值密度<a class="headerlink" href="#1621-高质量领域数据的价值密度" title="Permanent link">&para;</a></h3>
+<p>法律案例、医学文献、科学论文和金融报告有一个共同特征：<strong>每token的信息密度远超普通web文本</strong>。这些数据源通常只占互联网文本的极小部分，但对专业领域模型至关重要。</p>
+<p>2024年的RegMix研究给出了量化证据：通用web语料（如Common Crawl）与下游性能的正相关性最强 [<sup>25</sup>]。但这只适用于通用任务。当目标是法律推理或临床诊断时，通用web文本的价值密度急剧下降——这些领域需要专门的知识结构和术语体系。</p>
+<p>领域数据的价值不仅在于知识内容，还在于推理结构。法律文本的判例推理、医学文献的循证分析、科学论文的假设-实验-论证链条，这些结构化的推理模式是普通web文本中稀缺的。</p>
+<h3 id="1622-上采样策略稀缺数据的权重设计">16.2.2 上采样策略：稀缺数据的权重设计<a class="headerlink" href="#1622-上采样策略稀缺数据的权重设计" title="Permanent link">&para;</a></h3>
+<p><strong>上采样</strong>（upsampling）指对数据量少的领域给予超出其自然比例的采样权重。这是处理稀缺领域数据的标准手段。</p>
+<p>温度采样（temperature sampling）是上采样的数学基础。对语言l的采样概率重新加权为 p_l ~ (n_l)^(1/T) [<sup>19</sup>]。T&gt;1时，低资源领域获得超出其自然比例的采样权重。BLOOM在训练ROOTS时就用温度采样来提升低资源语言的占比 [<sup>7</sup>]。</p>
+<p>2025年的新进展是将温度采样从语言维度扩展到<strong>质量维度和难度维度</strong>：<br />
+- <strong>质量温度</strong>：高质量文档获得额外上采样<br />
+- <strong>难度温度</strong>：对当前模型&rdquo;难度适中&rdquo;的文档（既不太容易也不太难）获得额外权重<br />
+- <strong>领域温度</strong>：稀缺专业领域（如法律、医学）获得显著上采样</p>
+<p>DBL（Dynamic Batch Loading）将上采样动态化 [<sup>34</sup>]。它基于scaling law估计每个领域的参考最优损失，计算当前超额损失（excess loss），对学习缓慢的领域自动增加数据比例。DBL不需要预先设定固定的采样权重，而是在训练中实时调整。</p>
+<h3 id="1623-动态配比的工程实践">16.2.3 动态配比的工程实践<a class="headerlink" href="#1623-动态配比的工程实践" title="Permanent link">&para;</a></h3>
+<p>OPUS是2025年最具代表性的在线动态配比方法 [<sup>35</sup>]。它的核心思想是将数据效用与优化器诱导的参数更新对齐——选择那些能引发最大有效梯度更新的数据。OPUS在每轮迭代中用投影评分评估每个数据batch的&rdquo;更新效率&rdquo;，然后调整下一轮的采样权重。</p>
+<p>DBL和OPUS代表了一个范式转变：从&rdquo;训练前设计完美配比&rdquo;转向&rdquo;让模型在训练中自己决定需要什么数据&rdquo;。这与MATES的&rdquo;模型感知数据选择&rdquo;思想一脉相承 [<sup>32</sup>]——预训练模型的数据偏好是动态演化的，静态配比无法捕捉这种变化。</p>
+<p>实践中，动态配比与静态配比的组合效果最佳：先用RegMix或DoReMi确定基础配比，再用DBL或OPUS在训练中做微调 [<sup>34</sup>]。这种&rdquo;粗调+微调&rdquo;策略兼具稳定性和适应性。</p>
+<h2 id="163-高质量数据合成数据推理数据的权重设计">16.3 高质量数据、合成数据、推理数据的权重设计<a class="headerlink" href="#163-高质量数据合成数据推理数据的权重设计" title="Permanent link">&para;</a></h2>
+<h3 id="1631-合成数据的规模化应用">16.3.1 合成数据的规模化应用<a class="headerlink" href="#1631-合成数据的规模化应用" title="Permanent link">&para;</a></h3>
+<p>2024-2025年，合成数据从实验性补充转变为预训练的核心组成部分。</p>
+<p>两种范式正在竞争 [<sup>33</sup>]：<strong>生成器驱动</strong>（用大型LLM如GPT-4从头生成数据）和<strong>源重述</strong>（用小型LLM将现有web数据重述为更高质量的格式）。生成器驱动的优势是质量高、格式可控，但成本高昂且受限于生成器能力。源重述的计算成本低、覆盖广、多样性高，但质量受限于源数据。</p>
+<p>2025年的共识是：<strong>源重述已成为主导范式</strong>。Kimi K2、Qwen-2.5、Grok、GPT-5都报告了大量使用源重述方法获得的收益 [<sup>33</sup>]。WRAP（Web Rephrase Augmented Pre-training）证明，策略性重述可以将预训练速度提升3倍以上 [<sup>33</sup>]。</p>
+<p>Nemotron-CC从Common Crawl生成了约2万亿tokens的合成数据 [<sup>11</sup>]。Phi-4在预训练中使用了40%合成数据 [<sup>36</sup>]。这些数字标志着合成数据不再是锦上添花，而是基础原料。</p>
+<p><strong>跨文档合成</strong>是最新方向。WRAP++利用web拓扑（如超链接）发现实体关系，将多个文档的事实联合合成为预训练数据 [<sup>37</sup>]。这超越了单文档重述的限制，使模型能够学习关联性知识。</p>
+<h3 id="1632-推理数据进入预训练">16.3.2 推理数据进入预训练<a class="headerlink" href="#1632-推理数据进入预训练" title="Permanent link">&para;</a></h3>
+<p>2024-2025年推理模型（o1/o3、DeepSeek-R1）的崛起对预训练数据配比产生了深远影响。长思维链（Chain-of-Thought, CoT）、数学证明、代码逻辑等推理数据开始被大量注入预训练阶段。</p>
+<p>Qwen3的二阶段预训练是典型案例：第一阶段用通用数据建立基础能力，第二阶段用专门的推理数据强化数学、代码和科学推理能力。这种&rdquo;通用+推理&rdquo;的分阶段策略在2025年被广泛采用。</p>
+<p>推理数据对预训练的价值在于结构而非内容。数学证明的&rdquo;假设-推导-结论&rdquo;结构、代码的&rdquo;输入-处理-输出&rdquo;逻辑、科学论文的&rdquo;问题-方法-结果&rdquo;框架，这些结构化推理模式是通用web文本中稀缺的。</p>
+<h3 id="1633-三类数据的配比框架">16.3.3 三类数据的配比框架<a class="headerlink" href="#1633-三类数据的配比框架" title="Permanent link">&para;</a></h3>
+<p>2025-2026年的预训练数据通常由三类成分构成。表16-1给出了主流模型的配比实践。</p>
+<p><strong>表16-1  2025-2026年预训练数据的三类成分配比框架</strong></p>
+<table>
+<thead>
+<tr>
+<th>数据类型</th>
+<th>典型比例</th>
+<th>主要来源</th>
+<th>核心价值</th>
+<th>代表实践</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>高质量自然数据</td>
+<td>50-60%</td>
+<td>过滤后的web、书籍、论文、专业文档</td>
+<td>知识覆盖广、语言多样</td>
+<td>LLaMA-3通用知识占50% [<sup>22</sup>]</td>
+</tr>
+<tr>
+<td>合成数据</td>
+<td>20-40%</td>
+<td>源重述（WRAP）、跨文档合成（WRAP++）、教科书生成（Cosmopedia）</td>
+<td>格式统一、质量可控、可无限扩展</td>
+<td>Phi-4用40%合成数据 [<sup>36</sup>]</td>
+</tr>
+<tr>
+<td>推理数据</td>
+<td>10-25%</td>
+<td>数学证明、长CoT、代码逻辑、科学推理</td>
+<td>结构化推理模式、逻辑思维训练</td>
+<td>Qwen3二阶段推理强化</td>
+</tr>
+</tbody>
+</table>
+<p>三类数据的配比不是固定的，而是根据模型目标动态调整。通用基座模型偏向高质量自然数据（60%），推理专用模型增加推理数据到25%以上，领域专业模型则通过CPT注入更多专业数据。</p>
+<p>合成数据占比的持续上升引发了一个关键问题：<strong>质量与多样性的权衡</strong>。合成数据的格式一致性高，但过度依赖合成可能限制模型接触真实语言的多样性。2025年的经验法则是：合成数据不超过总量的40%，且需要与真实数据混合使用 [<sup>36</sup>]。</p>
+<h2 id="164-领域继续预训练如何让模型快速进入专业领域">16.4 领域继续预训练：如何让模型快速进入专业领域<a class="headerlink" href="#164-领域继续预训练如何让模型快速进入专业领域" title="Permanent link">&para;</a></h2>
+<h3 id="1641-d-cpt的技术路线">16.4.1 D-CPT的技术路线<a class="headerlink" href="#1641-d-cpt的技术路线" title="Permanent link">&para;</a></h3>
+<p><strong>领域继续预训练</strong>（Domain Continual Pre-Training, D-CPT）指在通用预训练模型基础上，使用领域特定语料继续训练，使模型快速获得专业能力。这是2025年最活跃的产品化技术之一。</p>
+<p>D-CPT面临的核心矛盾是<strong>领域增强 vs 灾难性遗忘</strong>（Catastrophic Forgetting）。直接在领域语料上继续训练会显著提升领域任务性能，但可能损害通用能力 [<sup>39</sup>]。Gururangan等人2020年的研究指出，DAPT显著提升领域任务的微调性能，但可能损害提示（prompting）性能 [<sup>39</sup>]。</p>
+<p>表16-2对比了主要的技术路线。</p>
+<p><strong>表16-2  领域继续预训练（D-CPT）的主要技术路线对比</strong></p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>核心机制</th>
+<th>优势</th>
+<th>劣势</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>简单D-CPT</td>
+<td>直接在领域语料上继续训练</td>
+<td>实现简单、领域增益大</td>
+<td>灾难性遗忘严重</td>
+<td>封闭领域专用模型</td>
+</tr>
+<tr>
+<td>D-CPT + KL约束</td>
+<td>添加KL散度约束，限制模型偏离原始分布</td>
+<td>保留通用能力</td>
+<td>训练 slower、超参敏感</td>
+<td>通用+领域双重要求的模型</td>
+</tr>
+<tr>
+<td>DEMix-D-CPT</td>
+<td>用领域专家混合层替换FFN层</td>
+<td>领域与通用能力隔离</td>
+<td>架构修改复杂、推理开销大</td>
+<td>多领域统一服务的模型</td>
+</tr>
+<tr>
+<td>ELLE</td>
+<td>扩展模型宽度/深度来容纳新知识</td>
+<td>不损害已有能力</td>
+<td>参数量增加、部署成本上升</td>
+<td>高价值领域 requiring 极致性能</td>
+</tr>
+<tr>
+<td>通用+领域混合CPT</td>
+<td>按一定比例混合通用和领域数据</td>
+<td>平衡最好、工程实践最成熟</td>
+<td>需要调配比、领域增益略低</td>
+<td>绝大多数产品化场景</td>
+</tr>
+</tbody>
+</table>
+<h3 id="1642-通用领域混合的最优比例">16.4.2 通用+领域混合的最优比例<a class="headerlink" href="#1642-通用领域混合的最优比例" title="Permanent link">&para;</a></h3>
+<p>2025年的工程实践表明，<strong>通用+领域混合CPT</strong>是最可靠的路径。关键是混合比例的确定。</p>
+<p>经验法则从多个项目中收敛出来 [<sup>39</sup>][<sup>40</sup>]：</p>
+<ul>
+<li><strong>领域数据占比30-50%</strong>：低于30%时领域增益不足，高于50%时遗忘风险显著增加</li>
+<li><strong>领域数据质量要求比通用预训练更高</strong>：因为数据量更小，每个token的&rdquo;责任&rdquo;更重</li>
+<li><strong>学习率比通用预训练低一个数量级</strong>：通常从通用预训练最终学习率的10%开始</li>
+<li><strong>训练长度以领域验证损失为准</strong>：不预设epoch数，以领域验证集上的损失不再下降为停止信号</li>
+</ul>
+<p>D-CPT的数据配方设计遵循与预训练相同的逻辑。RegMix等配比优化方法可以直接应用于D-CPT场景——训练小代理模型搜索最优的通用/领域混合比例，然后用于大规模CPT。</p>
+<h3 id="1643-领域cpt的实践案例">16.4.3 领域CPT的实践案例<a class="headerlink" href="#1643-领域cpt的实践案例" title="Permanent link">&para;</a></h3>
+<p>法律领域的案例最具代表性。法律文本包含判例引用、法规条文、司法解释等独特结构。简单D-CPT会使模型在法律推理上大幅提升，但可能遗忘通用对话能力。采用D-CPT + KL约束的方法，在保留通用能力的同时，将法律案例检索准确率提升30-50%。</p>
+<p>医学领域面临数据隐私约束，可用语料远少于法律。合成数据在这里扮演关键角色——使用源重述方法将公开医学文献扩展为多样化的训练数据，可以在不增加真实数据的情况下提升模型效果。</p>
+<p>金融领域的特点是高度时效性。市场数据、财报、新闻的价值随时间快速衰减。这要求D-CPT是一个持续过程，而非一次性训练。2025年的金融LLM产品普遍采用&rdquo;月度增量CPT&rdquo;策略——每月用新数据做一次轻量级继续训练。</p>
+<h2 id="165-数据配方成为模型差异化的第一竞争力">16.5 数据配方成为模型差异化的第一竞争力<a class="headerlink" href="#165-数据配方成为模型差异化的第一竞争力" title="Permanent link">&para;</a></h2>
+<h3 id="1651-同样架构不同数据截然不同">16.5.1 同样架构，不同数据，截然不同<a class="headerlink" href="#1651-同样架构不同数据截然不同" title="Permanent link">&para;</a></h3>
+<p>2025年的模型竞争格局呈现一个鲜明特征：<strong>架构趋同，数据分化</strong>。主流模型都是Transformer decoder-only架构，差异主要在数据配方。</p>
+<p>这个现象有其技术根源。Transformer架构自2017年以来没有本质变化，缩放律（Scaling Laws）已成为公开知识，训练超参数（学习率、batch size、warmup）有成熟的调参方法。唯一无法轻易复制的是<strong>数据配方</strong>——它需要大量的实验迭代、领域知识和工程投入。</p>
+<p>LLaMA-3的配方（50%通用 + 25%数学推理 + 17%代码 + 8%多语言）与同期其他模型的差异，解释了其能力特征的差异 [<sup>22</sup>]。数学推理占比25%是其数学能力突出的直接原因。代码占比17%是其编程能力的基础。这不是巧合，而是刻意设计的结果。</p>
+<h3 id="1652-数据作为核心ip">16.5.2 数据作为核心IP<a class="headerlink" href="#1652-数据作为核心ip" title="Permanent link">&para;</a></h3>
+<p>闭源模型与开源模型的最大差异，不在架构，而在数据。GPT-4和LLaMA-3的架构没有本质区别，但训练数据的筛选标准、配比比例、清洗pipeline完全不同。</p>
+<p>数据配方成为核心IP的原因有三：</p>
+<ol type="1">
+<li><strong>不可复制性</strong>：数据配方无法从模型权重中反推。即使模型开源，训练数据的具体配比仍是黑盒。</li>
+<li><strong>高门槛</strong>：开发一个好的数据配方需要大量计算资源（DoReMi需要训练代理模型，RegMix需要训练512个小模型）、领域专业知识和反复迭代。</li>
+<li><strong>复合效应</strong>：数据配方的差异在预训练阶段被&rdquo;固化&rdquo;到数十亿参数中，通过后训练只能微调，难以根本改变。</li>
+</ol>
+<h3 id="1653-数据工程地位的演进">16.5.3 数据工程地位的演进<a class="headerlink" href="#1653-数据工程地位的演进" title="Permanent link">&para;</a></h3>
+<p>图16-1展示了2020-2026年间数据工程在大模型研发中地位的演进。</p>
+<p><a class="glightbox" href="../../assets/fig16_1_data_engineering_trend.png" data-type="image" data-width="100%" data-height="auto" data-desc-position="bottom"><img alt="图16-1 数据工程从大模型&quot;后勤&quot;到核心竞争力的演进（2020-2026）" src="../../assets/fig16_1_data_engineering_trend.png" /></a></p>
+<p>2020-2021年是<strong>原料堆积期</strong>。GPT-3证明大规模web数据可行，数据策略就是&rdquo;堆量&rdquo;。清洗是事后补救，配比是直觉调参。</p>
+<p>2022年是<strong>规模觉醒期</strong>。Chinchilla提出D≈20N的缩放律 [<sup>18</sup>]，数据量从&rdquo;无限资源&rdquo;变成&rdquo;需要规划的要素&rdquo;。</p>
+<p>2023年是<strong>配比萌芽期</strong>。LLaMA-1展示人工配比的价值，DoReMi开启自动优化。数据工程从后勤走向前线。</p>
+<p>2024年是<strong>科学优化期</strong>。DataComp-LM将数据筛选基准化 [<sup>10</sup>]，RegMix证明回归预测可行 [<sup>25</sup>]，MATES引入模型感知选择 [<sup>32</sup>]。数据工程成为可公开比较的科学。</p>
+<p>2025-2026年进入<strong>动态智能期</strong>和<strong>配方竞争期</strong>。DBL、OPUS等在线方法实现训练中的动态配比 [<sup>34</sup>][<sup>35</sup>]，合成数据规模化 [<sup>33</sup>]，领域CPT成熟 [<sup>39</sup>]。数据配方从训练前的一次性决策，演变为贯穿训练全程的动态优化过程。</p>
+<p>图中有两条曲线的分化值得关注。数据工程的&rdquo;战略地位&rdquo;曲线持续上升，在2026年接近饱和——这意味着数据配方已确立为核心竞争力，不再是新发现。而&rdquo;配比策略复杂度&rdquo;曲线在2025年加速上升——这意味着方法本身在不断复杂化，入门门槛在提高。</p>
+<p>这种分化对产业格局的影响是深远的。大型科技公司可以继续投入资源跟进日益复杂的方法，而中小型团队可能转向更简单但足够好的方案（如RegMix的回归方法，计算成本不到2% [<sup>25</sup>]）。数据配比的民主化与专业化两条路线将在2026年并存。</p>
+<p>从更大的视角看，数据配比的演进折射出大模型研发的范式转移。2020年的核心竞争力是算力（谁有更多GPU），2022年是模型规模（谁的参数更多），2024年是数据规模（谁的tokens更多），2026年则转向<strong>数据质量与配比精度</strong>（谁的配方更优）。这个转移意味着大模型竞争正从&rdquo;资源密集型&rdquo;走向&rdquo;知识密集型&rdquo;——决定胜负的不再是硬件数量，而是对数据价值的理解和调控能力。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.indexes", "navigation.top", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.code.select", "content.tooltips"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.60a45f97.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  <script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(() => { lightbox.reload() });
+</script></body>
+</html>
