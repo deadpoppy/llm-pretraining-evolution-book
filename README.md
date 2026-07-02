@@ -42,7 +42,6 @@
 ├── README.md
 ├── mkdocs.yml
 ├── requirements.txt
-├── .github/workflows/pages.yml
 ├── book/
 │   ├── 大语言模型预训练技术演进.md
 │   ├── outline.md
@@ -70,4 +69,12 @@
 ```bash
 pip install -r requirements.txt
 mkdocs serve
+```
+
+## 发布
+
+当前网站发布到 `gh-pages` 分支，GitHub Pages 源设置为 `gh-pages` / 根目录。发布命令：
+
+```bash
+mkdocs gh-deploy --force
 ```
